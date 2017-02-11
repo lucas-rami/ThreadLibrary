@@ -85,7 +85,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
-410TESTS =
+410TESTS = actual_wait cat getpid_test1 halt_test misbehave misbehave_wrap nibbles stack_test1 wild_test1
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -93,7 +93,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory
 #
-STUDENTTESTS =
+STUDENTTESTS = print_test fork_test
 
 ###########################################################################
 # Object files for your thread library
@@ -111,7 +111,7 @@ THREAD_OBJS = malloc.o panic.o
 ###########################################################################
 # Object files for your syscall wrappers
 ###########################################################################
-SYSCALL_OBJS = syscall.o
+SYSCALL_OBJS = vanish.o set_status.o print.o deschedule.o exec.o fork.o getchar.o gettid.o make_runnable.o readline.o sleep.o swexn.o wait.o yield.o set_term_color.o get_cursor_pos.o set_cursor_pos.o halt.o readfile.o task_vanish.o new_pages.o remove_pages.o get_ticks.o misbehave.o
 
 ###########################################################################
 # Object files for your automatic stack handling
