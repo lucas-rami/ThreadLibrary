@@ -3,7 +3,7 @@
  *  @author akanjani, lramire1
  */
 
-#include <mutex_type.h>
+#include <mutex.h>
 
 #define LOCKED_VAL 0
 #define UNLOCKED_VAL 1

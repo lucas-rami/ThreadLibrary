@@ -98,7 +98,7 @@ STUDENTTESTS = print_test fork_test
 ###########################################################################
 # Object files for your thread library
 ###########################################################################
-THREAD_OBJS = malloc.o panic.o
+THREAD_OBJS = malloc.o panic.o mutex.o atomic_ops.o
 
 # Thread Group Library Support.
 #
@@ -133,4 +133,3 @@ AUTOSTACK_OBJS = autostack.o
 # directory (see 410user/progs/cat.c)
 #
 STUDENTFILES =
-
