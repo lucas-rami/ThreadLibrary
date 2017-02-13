@@ -4,9 +4,12 @@
  */
 
 #include <mutex.h>
+#include <atomic_ops.h>
 
 #define LOCKED_VAL 0
 #define UNLOCKED_VAL 1
+#define INIT_FALSE 0
+#define INIT_TRUE 1
 
 /** @brief Initialize a mutex
  *
@@ -21,13 +24,12 @@
  */
 int mutex_init(mutex_t *mp) {
 
-  if (mp->init) {
+  if (mp == NULL) {
     return -1;
   }
 
   mp->lock_available = UNLOCKED_VAL;
-  mp->nb_threads_waiting = 0;
-  mp->init = 1;
+  mp->init = INIT_TRUE;
   return 0;
 }
 
@@ -43,20 +45,8 @@ int mutex_init(mutex_t *mp) {
  *  @return void
  */
 void mutex_destroy(mutex_t *mp) {
-
-  while (mp->init) {
-
-    // Wait till we get the lock
-    while (!mp->init || !atomic_exchange(&mp->lock_available, LOCKED_VAL)) {
-      continue;
-    }
-    // If no other thread is waiting, deactivate the mutex
-    if (mp->nb_threads_waiting == 0) {
-      mp->init = 0;
-    }
-    // Unlock the mutex
-    atomic_exchange(&mp->lock_available, UNLOCKED_VAL);
-  }
+  mp->init = INIT_FALSE;
+  mp->lock_available = LOCKED_VAL;
 }
 
 /** @brief Acquire the lock on a mutex
@@ -70,24 +60,11 @@ void mutex_destroy(mutex_t *mp) {
  */
 void mutex_lock(mutex_t *mp) {
 
-  // Increment the number of threads waiting
-  int nb_threads = mp->nb_threads_waiting;
-  while (
-      !atomic_cmp_xchg(&mp->nb_threads_waiting, nb_threads, nb_threads + 1)) {
-    nb_threads = mp->nb_threads_waiting;
-  }
-
   // Wait till we get the lock
-  while (!mp->init || !atomic_exchange(&mp->lock_available, LOCKED_VAL)) {
+  while (mp->init == INIT_FALSE || atomic_exchange(&mp->lock_available, LOCKED_VAL) == LOCKED_VAL) {
     continue;
   }
 
-  // Decrement the number of threads waiting
-  nb_threads = mp->nb_threads_waiting;
-  while (
-      !atomic_cmp_xchg(&mp->nb_threads_waiting, nb_threads, nb_threads - 1)) {
-    nb_threads = mp->nb_threads_waiting;
-  }
 }
 
 /** @brief Gives up the lock on a mutex
@@ -101,7 +78,7 @@ void mutex_lock(mutex_t *mp) {
  */
 void mutex_unlock(mutex_t *mp) {
   // This condition should always evaluate to true
-  if (mp->init && !mp->lock_available) {
+  if (mp->init == INIT_TRUE && mp->lock_available == LOCKED_VAL) {
     atomic_exchange(&mp->lock_available, UNLOCKED_VAL);
   }
 }

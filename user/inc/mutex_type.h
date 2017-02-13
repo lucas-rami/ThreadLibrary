@@ -9,7 +9,6 @@
 typedef struct mutex {
   int init;
   int lock_available;
-  int nb_threads_waiting;
 } mutex_t;
 
 #endif /* _MUTEX_TYPE_H */
