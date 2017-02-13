@@ -8,23 +8,32 @@
 #include <stdlib.h>
 #include <types.h>
 #include <stddef.h>
+#include <mutex_type.h>
+#include <mutex.h>
 
-void *malloc(size_t __size)
-{
-  return NULL;
+// The thread_init function should initialize this mutex
+mutex_t alloc_mutex;
+
+void *malloc(size_t __size) {
+  mutex_lock(&alloc_mutex);
+  _malloc(__size);
+  mutex_unlock(&alloc_mutex);
 }
 
-void *calloc(size_t __nelt, size_t __eltsize)
-{
-  return NULL;
+void *calloc(size_t __nelt, size_t __eltsize) {
+  mutex_lock(&alloc_mutex);
+  _calloc(__nelt, __eltsize);
+  mutex_unlock(&alloc_mutex);
 }
 
-void *realloc(void *__buf, size_t __new_size)
-{
-  return NULL;
+void *realloc(void *__buf, size_t __new_size) {
+  mutex_lock(&alloc_mutex);
+  _realloc(__buf, __new_size);
+  mutex_unlock(&alloc_mutex);
 }
 
-void free(void *__buf)
-{
-  return;
+void free(void *__buf) {
+  mutex_lock(&alloc_mutex);
+  _free(__buf);
+  mutex_unlock(&alloc_mutex);
 }
