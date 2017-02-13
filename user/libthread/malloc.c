@@ -16,20 +16,23 @@ mutex_t alloc_mutex;
 
 void *malloc(size_t __size) {
   mutex_lock(&alloc_mutex);
-  _malloc(__size);
+  void* ptr = _malloc(__size);
   mutex_unlock(&alloc_mutex);
+  return ptr;
 }
 
 void *calloc(size_t __nelt, size_t __eltsize) {
   mutex_lock(&alloc_mutex);
-  _calloc(__nelt, __eltsize);
+  void* ptr = _calloc(__nelt, __eltsize);
   mutex_unlock(&alloc_mutex);
+  return ptr;
 }
 
 void *realloc(void *__buf, size_t __new_size) {
   mutex_lock(&alloc_mutex);
-  _realloc(__buf, __new_size);
+  void* ptr = _realloc(__buf, __new_size);
   mutex_unlock(&alloc_mutex);
+  return ptr;
 }
 
 void free(void *__buf) {
