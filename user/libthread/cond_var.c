@@ -8,12 +8,14 @@
  */
 
 #include <cond_type.h>
-#include <cond_var.h>
+#include <cond.h>
 #include <queue.h>
 #include <stddef.h>
 #include <syscall.h>
 #include <stdio.h>
 
+#define CVAR_INITIALIZED 1
+#define CVAR_UNINITIALIZED 0
 #define DONT_RUN 0
 
 /** @brief Initializes a condition variable
@@ -36,7 +38,7 @@ int cond_init( cond_t *cv ) {
   spinlock_init( &( cv->spinlock ) );
 
   spinlock_acquire( &( cv->spinlock ) );
-  
+
   cv->init = CVAR_INITIALIZED;
 
   // Initialize the head and tail pointers in the waiting queue of the cvar
@@ -51,9 +53,9 @@ int cond_init( cond_t *cv ) {
 /** @brief Destroys a condition variable
  *
  *  This function deactivates the condition variable pointed to by cv.
- *  It is illegal for an application to use a condition variable after it has 
- *  been destroyed (unless and until it is later re-initialized). It is 
- *  illegal for an application to invoke cond destroy() on a condition 
+ *  It is illegal for an application to use a condition variable after it has
+ *  been destroyed (unless and until it is later re-initialized). It is
+ *  illegal for an application to invoke cond destroy() on a condition
  *  variable while threads are blocked waiting on it.
  *
  *  @param cv A pointer to the condition variable to deactivate
@@ -78,15 +80,17 @@ void cond_destroy( cond_t *cv ) {
     //  "There are threads blocked waiting for this condition variable.\n" );
   }
 
+  cv->init = CVAR_UNINITIALIZED;
+
   spinlock_release( &cv->spinlock );
 }
 
 /** @brief Waits for a condition to be true associated with cv
  *
- *  It allows a thread to wait for a condition and release the associated 
- *  mutex that it needs to hold to check that condition. The calling thread 
- *  blocks, waiting to be signaled. The blocked thread may be awakened by a 
- *  cond signal() or a cond broadcast(). Upon return from cond wait(), *mp 
+ *  It allows a thread to wait for a condition and release the associated
+ *  mutex that it needs to hold to check that condition. The calling thread
+ *  blocks, waiting to be signaled. The blocked thread may be awakened by a
+ *  cond signal() or a cond broadcast(). Upon return from cond wait(), *mp
  *  has been re-acquired on behalf of the calling thread.
  *
  *  @param cv A pointer to the condition variable
@@ -110,7 +114,7 @@ void cond_wait( cond_t *cv, mutex_t *mp ) {
 
   // Add this thread to the waiting queue of this condition variable
   insert_node( &cv->waiting_queue, (void*)gettid() );
-  
+
   // Release the mutex so that other threads can run now
   mutex_unlock( mp );
 
@@ -159,7 +163,7 @@ void cond_signal( cond_t *cv ) {
   }
 
   spinlock_release( &cv->spinlock );
-}  
+}
 
 /** @brief Wakes up all threads waiting on the condition variable pointed to
  *   by cv
@@ -196,5 +200,4 @@ void cond_broadcast( cond_t *cv ) {
   }
 
   spinlock_release( &cv->spinlock );
-}  
-
+}

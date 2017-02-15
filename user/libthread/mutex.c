@@ -3,14 +3,71 @@
  *  @author akanjani, lramire1
  */
 
-#include <mutex.h>
 #include <atomic_ops.h>
+#include <mutex.h>
 #include <stddef.h>
+#include <syscall.h>
 
-#define LOCKED_VAL 0
-#define UNLOCKED_VAL 1
-#define INIT_FALSE 0
-#define INIT_TRUE 1
+#define HELD 0
+#define FREE 1
+#define MUTEX_UNINITIALIZED 0
+#define MUTEX_INITIALIZED 1
+#define DONT_RUN 0
+
+/** @brief Enqueue a thread into the waiting list
+ *
+ *  This function must be called only from mutex_lock(),
+ *  otherwise the mutex's state is undefined.
+ *
+ *  @param mp The mutex
+ *  @param thr_id The thread's id of the thread we want to enqueue
+ *
+ *  @return void
+ */
+static void thr_enqueue(mutex_t *mp, int thr_id) {
+
+  // Acquire the queue spinlock
+  spinlock_acquire(&mp->queue_lock);
+
+  // Release the mutex lock so that other threads may progress
+  spinlock_release(&mp->lock);
+
+  // Insert the current thread into the waiting queue
+  insert_node(&mp->waiting_queue, (void *)thr_id);
+
+  // Release the queue spinlock
+  spinlock_release(&mp->queue_lock);
+
+  // Deschedule the current thread
+  int dont_run = DONT_RUN;
+  deschedule(&dont_run);
+}
+
+/** @brief Dequeue a thread from the waiting list
+ *
+ *  This function must be called only from mutex_unlock(),
+ *  otherwise the mutex's state is undefined.
+ *
+ *  @param mp The mutex
+ *
+ *  @return void
+ */
+static void thr_dequeue(mutex_t *mp) {
+
+  if (mp->waiting_queue.head == NULL) {
+    // panic("ILLEGAL Operation! Trying to dequeue from empty queue\n");
+  }
+
+  // Acquire the queue spinlock
+  spinlock_acquire(&mp->queue_lock);
+
+  // Make the the list's head thread runnable
+  int thr_id = (int)delete_node(&mp->waiting_queue);
+  make_runnable(thr_id);
+
+  // Release the queue spinlock
+  spinlock_release(&mp->queue_lock);
+}
 
 /** @brief Initialize a mutex
  *
@@ -29,8 +86,22 @@ int mutex_init(mutex_t *mp) {
     return -1;
   }
 
-  mp->lock_available = UNLOCKED_VAL;
-  mp->init = INIT_TRUE;
+  spinlock_init(&mp->lock);
+
+  // Make sure we are not interrupted while initializing
+  spinlock_acquire(&mp->lock);
+
+  spinlock_init(&mp->queue_lock);
+  mp->mutex_state = FREE;
+  mp->init = MUTEX_INITIALIZED;
+
+  // Initialize the head and tail pointers in the waiting queue of the cvar
+  mp->waiting_queue.head = NULL;
+  mp->waiting_queue.tail = NULL;
+
+  // Release the lock on the mutex
+  spinlock_release(&mp->lock);
+
   return 0;
 }
 
@@ -46,8 +117,25 @@ int mutex_init(mutex_t *mp) {
  *  @return void
  */
 void mutex_destroy(mutex_t *mp) {
-  mp->init = INIT_FALSE;
-  mp->lock_available = LOCKED_VAL;
+
+  if (mp == NULL) {
+    // panic("Invalid argument to mutex_destroy\n");
+  }
+
+  spinlock_acquire(&mp->lock);
+
+  if (mp->init == MUTEX_UNINITIALIZED) {
+    // panic("ILLEGAL operation! Trying to destroy uninitialized mutex\n");
+  }
+
+  if (mp->waiting_queue.head != NULL) {
+    // panic("ILLEGAL Operation! Trying to destroy mutex while some threads are
+    // waiting on it\n");
+  }
+
+  mp->init = MUTEX_UNINITIALIZED;
+
+  spinlock_release(&mp->lock);
 }
 
 /** @brief Acquire the lock on a mutex
@@ -61,11 +149,27 @@ void mutex_destroy(mutex_t *mp) {
  */
 void mutex_lock(mutex_t *mp) {
 
-  // Wait till we get the lock
-  while (mp->init == INIT_FALSE || atomic_exchange(&mp->lock_available, LOCKED_VAL) == LOCKED_VAL) {
-    continue;
+  if (mp == NULL) {
+    // panic("Invalid argument to mutex_lock\n");
   }
 
+  if (mp->init == MUTEX_UNINITIALIZED) {
+    // panic("ILLEGAL Operation! Trying to lock uninitialized mutex\n");
+  }
+
+  // Acquire the lock on the mutex
+  spinlock_acquire(&mp->lock);
+
+  if (mp->mutex_state == FREE) {
+    // No thread is in the critical section, we can lock the mutex
+    mp->mutex_state = HELD;
+    spinlock_release(&mp->lock);
+  } else {
+    // If somoe other thread is in the critical section, enqueue the current one
+    thr_enqueue(mp, gettid());
+    // The thread returning here owns the mutex and may proceed in the critical
+    // section
+  }
 }
 
 /** @brief Gives up the lock on a mutex
@@ -78,8 +182,26 @@ void mutex_lock(mutex_t *mp) {
  *  @return void
  */
 void mutex_unlock(mutex_t *mp) {
-  // This condition should always evaluate to true
-  if (mp->init == INIT_TRUE && mp->lock_available == LOCKED_VAL) {
-    atomic_exchange(&mp->lock_available, UNLOCKED_VAL);
+
+  if (mp == NULL) {
+    // panic("Invalid argument to mutex_lock\n");
   }
+
+  if (mp->init == MUTEX_UNINITIALIZED) {
+    // panic("ILLEGAL Operation! Trying to lock uninitialized mutex\n");
+  }
+
+  // Acquire the lock on the mutex
+  spinlock_acquire(&mp->lock);
+
+  if (mp->waiting_queue.head == NULL) {
+    // No thread is in the critical section, we can unlock the mutex
+    mp->mutex_state = FREE;
+  } else {
+    // Otherwise, run the first thread in the queue
+    thr_dequeue(mp);
+  }
+
+  // Release the lock on the mutex
+  spinlock_release(&mp->lock);
 }

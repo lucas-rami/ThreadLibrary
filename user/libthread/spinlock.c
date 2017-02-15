@@ -32,7 +32,7 @@ int spinlock_init( spinlock_t *lock ) {
 }
 
 /** @brief Acquires a spinlock. Atomically changes the state to LOCKED
- *   when no one else is holding the lock. We try in a while loop 
+ *   when no one else is holding the lock. We try in a while loop
  *   because there is always a chance that someone else acquired a lock
  *   before us and hence we wait for our turn
  *
