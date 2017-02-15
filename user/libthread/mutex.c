@@ -63,7 +63,9 @@ static void thr_dequeue(mutex_t *mp) {
 
   // Make the the list's head thread runnable
   int thr_id = (int)delete_node(&mp->waiting_queue);
-  make_runnable(thr_id);
+  while (make_runnable(thr_id) < 0) {
+    continue;
+  }
 
   // Release the queue spinlock
   spinlock_release(&mp->queue_lock);
@@ -165,7 +167,7 @@ void mutex_lock(mutex_t *mp) {
     mp->mutex_state = HELD;
     spinlock_release(&mp->lock);
   } else {
-    // If somoe other thread is in the critical section, enqueue the current one
+    // If some other thread is in the critical section, enqueue the current one
     thr_enqueue(mp, gettid());
     // The thread returning here owns the mutex and may proceed in the critical
     // section
@@ -195,7 +197,7 @@ void mutex_unlock(mutex_t *mp) {
   spinlock_acquire(&mp->lock);
 
   if (mp->waiting_queue.head == NULL) {
-    // No thread is in the critical section, we can unlock the mutex
+    // No thread is in the waiting queue, we can unlock the mutex
     mp->mutex_state = FREE;
   } else {
     // Otherwise, run the first thread in the queue

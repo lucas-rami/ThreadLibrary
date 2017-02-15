@@ -159,7 +159,9 @@ void cond_signal( cond_t *cv ) {
     }
 
     // Start the thread which was just dequed from the waiting queue
-    make_runnable( ( int )tid );
+    while (make_runnable( ( int )tid ) < 0) {
+      continue;
+    }
   }
 
   spinlock_release( &cv->spinlock );
