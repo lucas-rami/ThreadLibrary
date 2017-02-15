@@ -5,6 +5,7 @@
 
 #include <mutex.h>
 #include <atomic_ops.h>
+#include <stddef.h>
 
 #define LOCKED_VAL 0
 #define UNLOCKED_VAL 1
