@@ -75,7 +75,7 @@ STUDENTTESTS = print_test fork_test
 ###########################################################################
 # Object files for your thread library
 ###########################################################################
-THREAD_OBJS = malloc.o panic.o mutex.o atomic_ops.o cond_var.o queue.o spinlock.o thr_create.o
+THREAD_OBJS = malloc.o panic.o mutex.o atomic_ops.o cond_var.o queue.o spinlock.o thr_create.o thread_fork.o
 
 # Thread Group Library Support.
 #
@@ -88,7 +88,7 @@ THREAD_OBJS = malloc.o panic.o mutex.o atomic_ops.o cond_var.o queue.o spinlock.
 ###########################################################################
 # Object files for your syscall wrappers
 ###########################################################################
-SYSCALL_OBJS = vanish.o set_status.o print.o deschedule.o exec.o fork.o getchar.o gettid.o make_runnable.o readline.o sleep.o swexn.o wait.o yield.o set_term_color.o get_cursor_pos.o set_cursor_pos.o halt.o readfile.o task_vanish.o new_pages.o remove_pages.o get_ticks.o misbehave.o thread_fork.o
+SYSCALL_OBJS = vanish.o set_status.o print.o deschedule.o exec.o fork.o getchar.o gettid.o make_runnable.o readline.o sleep.o swexn.o wait.o yield.o set_term_color.o get_cursor_pos.o set_cursor_pos.o halt.o readfile.o task_vanish.o new_pages.o remove_pages.o get_ticks.o misbehave.o
 
 ###########################################################################
 # Object files for your automatic stack handling
