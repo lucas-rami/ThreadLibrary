@@ -7,8 +7,8 @@
 #ifndef THR_INTERNALS_H
 #define THR_INTERNALS_H
 
-#define NORETURN __attribute__((__noreturn__))
+void stub(void *(*func)(void *), void *arg, void *stack_high);
 
-void stub(void *(*func)(void *), void *arg, void *stack_high) NORETURN;
+int thread_fork(void* child_esp);
 
 #endif /* THR_INTERNALS_H */

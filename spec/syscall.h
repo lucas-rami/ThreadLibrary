@@ -15,7 +15,6 @@
 
 /* Life cycle */
 int fork(void);
-int thread_fork(void* child_esp);
 int exec(char *execname, char *argvec[]);
 void set_status(int status);
 void vanish(void) NORETURN;
