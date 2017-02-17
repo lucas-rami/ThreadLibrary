@@ -3,7 +3,9 @@
  * instead.
  */
 
-void
-install_autostack(void *stack_high, void *stack_low)
-{
+#include <thr_internals.h>
+
+void install_autostack(void *stack_high, void *stack_low) {
+  task_state.stack_lowest = stack_low;
+  task_state.stack_highest = stack_high;
 }

@@ -10,15 +10,11 @@
 #include <thr_internals.h>
 
 // TEMPORARY //
-extern int status;
-extern void* addr_exception_stack;
-
+void* addr_exception_stack = NULL;
 
 // Mutex for thread-safe malloc library
-mutex_t alloc_mutex;
+extern mutex_t alloc_mutex;
 
-// Specifies the amount of stack space available for each thread
-unsigned int stack_size;
 
 /** @brief Initialize the thread library
  *
@@ -37,11 +33,26 @@ int thr_init(unsigned int size) {
     return -1;
   }
 
-  // Make 'size' visible for all the task's threads
-  stack_size = size;
-
   // Initialize the mutex for thread-safe malloc library
   mutex_init(&alloc_mutex);
+
+  int thr_stack_len = (task_state.stack_highest - task_state.stack_lowest) / size;
+
+  // Initialize the task_state_t structure
+  task_state.stacks = calloc((thr_stack_len / CHUNK_SIZE) * (CHUNK_SIZE + 1), sizeof(page_state));
+  if (task_state.stacks == NULL) {
+    mutex_destroy(&alloc_mutex);
+    return -1;
+  }
+  int i;
+  for (i = 0 ; i < thr_stack_len ; ++i) {
+    task_state.stacks[i] = ALLOCATED;
+  }
+  task_state.stack_size = size;
+  task_state.nb_threads = 1;
+  task_state.stacks_len = CHUNK_SIZE;
+  task_state.stacks_offset = thr_stack_len;
+  mutex_init(&task_state.mutex);
 
   // Register new exception handler (no automatic stack growth)
   swexn(addr_exception_stack, multithread_handler, NULL, NULL);
@@ -60,5 +71,6 @@ int thr_init(unsigned int size) {
  *  @return void
  */
 void multithread_handler(void* arg, ureg_t *ureg) {
+  int status = 0;
   task_vanish(status);
 }
