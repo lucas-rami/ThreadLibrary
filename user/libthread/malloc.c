@@ -11,8 +11,8 @@
 #include <mutex_type.h>
 #include <mutex.h>
 
-// The thread_init function should initialize this mutex
-mutex_t alloc_mutex;
+// The thread_init() function initializes this mutex
+extern mutex_t alloc_mutex;
 
 void *malloc(size_t __size) {
   mutex_lock(&alloc_mutex);
