@@ -8,6 +8,7 @@
 #include <syscall.h>
 #include <thr_internals.h>
 #include <thread.h>
+#include <simics.h>
 
 /** @brief Create a new thread to run func(arg)
  *
@@ -44,7 +45,7 @@ int thr_create(void *(*func)(void *), void *arg) {
   spinlock_release(&task.state_lock);
 
   // Allocate the stack for the child
-  if (new_pages(child_stack_low, child_stack_high - child_stack_low) < 0) {
+  if (new_pages(child_stack_low, (unsigned int) child_stack_high - (unsigned int) child_stack_low) < 0) {
     // If we could not allocate stack space, put them in the queue
     mutex_lock(&task.queue_mutex);
     insert_node(&task.stack_queue, child_stack_high);
@@ -105,6 +106,6 @@ void stub(void *(*func)(void *), void *arg, void *addr_exception_stack) {
 
   swexn(addr_exception_stack, multithread_handler, NULL, NULL);
 
-  void *ret = func(arg);
+  void* ret = func(arg);
   thr_exit(ret);
 }
