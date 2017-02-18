@@ -11,5 +11,5 @@ new_pages:
 	push %esi		# Save the old esi
 	leal 8(%esp), %esi	# Copy the address of the first arg to esi
 	int $NEW_PAGES_INT	# Make a trap for new_pages
-	pop %esp		# Restore the esi to old value
+	pop %esi		# Restore the esi to old value
 	ret			# return
