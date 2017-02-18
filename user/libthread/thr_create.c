@@ -3,10 +3,10 @@
  *  @author akanjani, lramire1
  */
 
+#include <global_state.h>
 #include <stdlib.h>
 #include <syscall.h>
 #include <thr_internals.h>
-#include <global_state.h>
 #include <thread.h>
 
 /** @brief Create a new thread to run func(arg)
@@ -26,91 +26,65 @@ int thr_create(void *(*func)(void *), void *arg) {
     return -1;
   }
 
-  // Lock the mutex on the task's state before updating it
-  mutex_lock(&task_state.mutex);
+  unsigned int *child_stack_low, *child_stack_high;
 
-  // Define boundaries of child's stack
-  void *child_stack_high = task_state.stack_lowest;
-  void *child_stack_low =
-      (void *)((unsigned int)child_stack_high - task_state.stack_size);
+  // Try to find space for a new stack in the queue
+  mutex_lock(&task.queue_mutex);
+  child_stack_high = delete_node(&task.stack_queue);
+  mutex_unlock(&task.queue_mutex);
 
-  // Go through the list of previously allocated stacks and look for a free page
-  int i = 0;
-  while (i < task_state.stacks_len && task_state.stacks[i] == ALLOCATED) {
-    ++i;
+  // Define child_stack_low/high and update global state if necessary
+  spinlock_acquire(&task.state_lock);
+  if (child_stack_high == NULL) {
+    child_stack_high = task.stack_lowest - PAGE_SIZE;
+    // Need space for : 1 stack + 1 page (exception stack) + 1 page (guardpage)
+    task.stack_lowest -= (task.stack_size + 2 * PAGE_SIZE);
   }
-
-  // We did not found a free page
-  if (i == task_state.stacks_len) {
-    // Allocate more memory for the 'stacks' array if necessary
-    if (task_state.stacks_offset >= task_state.stacks_len) {
-      page_state *tmp =
-          realloc(task_state.stacks,
-                  (task_state.stacks_len + CHUNK_SIZE) * sizeof(page_state));
-      if (tmp == NULL) {
-        mutex_unlock(&task_state.mutex);
-        return -1;
-      }
-
-      task_state.stacks = tmp;
-      task_state.stacks_len += CHUNK_SIZE;
-    }
-
-    i = task_state.stacks_offset;
-    ++task_state.stacks_offset;
-  }
-
-  // Mark the stack page(s) as ALLOCATED
-  task_state.stacks[i] = ALLOCATED;
-
-  // Update the number of threads in the task
-  ++task_state.nb_threads;
-
-  // Update the lowest address for this task's thread stacks
-  task_state.stack_lowest = child_stack_low;
-
-  // Unlock the mutex on the task's state
-  mutex_unlock(&task_state.mutex);
+  child_stack_low = child_stack_high - task.stack_size - PAGE_SIZE;
+  spinlock_release(&task.state_lock);
 
   // Allocate the stack for the child
-  if (new_pages(child_stack_low, task_state.stack_size) < 0) {
-
-    // Reset the task's state
-    mutex_lock(&task_state.mutex);
-    --task_state.nb_threads;
-    task_state.stacks[task_state.stacks_offset] = FREE;
-    task_state.stack_lowest += task_state.stack_size;
-    mutex_unlock(&task_state.mutex);
+  if (new_pages(child_stack_low, child_stack_high - child_stack_low) < 0) {
+    // If we could not allocate stack space, put them in the queue
+    mutex_lock(&task.queue_mutex);
+    insert_node(&task.stack_queue, child_stack_high);
+    mutex_unlock(&task.queue_mutex);
     return -1;
   }
 
-  // Initialize the child's stack
-  unsigned int *child_esp = (unsigned int *)child_stack_high - 2;
+  // Initialize the child's stack (at lower addresses than the exception stack)
+  unsigned int *child_esp =
+      (unsigned int *)((unsigned int)child_stack_high - PAGE_SIZE) - 2;
+  *child_esp = (unsigned int)child_stack_high; // Address of exception stack
+  --child_esp;
   *child_esp = (unsigned int)arg;
   --child_esp;
   *child_esp = (unsigned int)func;
   --child_esp;
+  // Empty space for "virtual" stub's calling function
   --child_esp;
-  *child_esp = (unsigned int)stub;
+  *child_esp = (unsigned int)stub; // Address of stub function
 
   // Create the child thread with thread_fork()
   int child_tid;
   if ((child_tid = thread_fork(child_esp)) < 0) {
-    // De-allocate stack page(s)
-    remove_pages(child_stack_low);
-
-    // Reset the task's state
-    mutex_lock(&task_state.mutex);
-    --task_state.nb_threads;
-    task_state.stacks[task_state.stacks_offset] = FREE;
-    task_state.stack_lowest += task_state.stack_size;
-    mutex_unlock(&task_state.mutex);
-
+    // De-allocate stack space
+    remove_pages(child_stack_high);
+    // Put stack space in the queue
+    mutex_lock(&task.queue_mutex);
+    insert_node(&task.stack_queue, child_stack_high);
+    mutex_unlock(&task.queue_mutex);
     return -1;
   }
 
   // Store the child's thread id on the very bottom of its stack
-  *((unsigned int *)child_stack_high - 1) = child_tid;
+  // TODO: What happens if the child tries to access it before we run this code
+  *((unsigned int *)(child_stack_high - PAGE_SIZE - 1)) = child_tid;
+
+  // Update the number of threads in the task before returning
+  spinlock_acquire(&task.state_lock);
+  ++task.nb_threads;
+  spinlock_release(&task.state_lock);
 
   return child_tid;
 }
@@ -118,7 +92,8 @@ int thr_create(void *(*func)(void *), void *arg) {
 /** @brief Stub function for newly created thread
  *
  *  This function serves as a safeguard against threads returning from
- *  their body function instead of calling thr_exit().
+ *  their body function instead of calling thr_exit(). It also allows
+ *  us to register an exception handler for the newly created thread.
  *
  *  @param func The function to be ran by the new thread
  *  @param arg The argument to the function
@@ -126,8 +101,10 @@ int thr_create(void *(*func)(void *), void *arg) {
  *
  *  @return Do not return
  */
-void stub(void *(*func)(void *), void *arg) {
-  func(arg);
-  int status = 0;
-  thr_exit(&status);
+void stub(void *(*func)(void *), void *arg, void *addr_exception_stack) {
+
+  swexn(addr_exception_stack, multithread_handler, NULL, NULL);
+
+  void *ret = func(arg);
+  thr_exit(ret);
 }
