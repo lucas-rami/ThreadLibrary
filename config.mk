@@ -62,7 +62,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
-410TESTS = actual_wait cat getpid_test1 halt_test misbehave misbehave_wrap nibbles stack_test1 wild_test1
+410TESTS = startle actual_wait cat getpid_test1 halt_test misbehave misbehave_wrap nibbles stack_test1 wild_test1
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -75,7 +75,7 @@ STUDENTTESTS = print_test fork_test
 ###########################################################################
 # Object files for your thread library
 ###########################################################################
-THREAD_OBJS = malloc.o panic.o mutex.o atomic_ops.o cond_var.o queue.o spinlock.o thr_create.o thread_fork.o thr_init.o exception_handler.o
+THREAD_OBJS = malloc.o panic.o mutex.o atomic_ops.o cond_var.o queue.o spinlock.o thr_create.o thread_fork.o thr_init.o exception_handler.o thr_exit.o
 
 # Thread Group Library Support.
 #

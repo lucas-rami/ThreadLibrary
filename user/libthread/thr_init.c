@@ -38,6 +38,8 @@ int thr_init(unsigned int size) {
   }
   task.stack_size = size;
   task.nb_threads = 1;
+  task.stack_queue.head = NULL;
+  task.stack_queue.tail   = NULL;
 
   // Initialize the mutex for thread-safe malloc library
   mutex_init(&alloc_mutex);
