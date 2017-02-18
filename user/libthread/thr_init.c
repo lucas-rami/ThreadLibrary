@@ -8,6 +8,7 @@
 #include <mutex.h>
 #include <syscall.h>
 #include <thr_internals.h>
+#include <global_state.h>
 
 // TEMPORARY //
 void* addr_exception_stack = NULL;

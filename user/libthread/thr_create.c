@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <syscall.h>
 #include <thr_internals.h>
+#include <global_state.h>
 #include <thread.h>
 
 /** @brief Create a new thread to run func(arg)
