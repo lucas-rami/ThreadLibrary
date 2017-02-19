@@ -8,7 +8,7 @@
 
 #include <data_structures.h>
 
-int linked_list_init(generic_linked_list_t *list);
+int linked_list_init(generic_linked_list_t *list, int (*find)(void *, void *));
 int linked_list_insert_node(generic_linked_list_t *list, void *value);
 void *linked_list_delete_node(generic_linked_list_t *list, void *value);
 void *linked_list_get_node(const generic_linked_list_t *list, void *value);

@@ -10,7 +10,21 @@
 #include <linked_list.h>
 #include <stdlib.h>
 
-int hash_table_init(generic_hash_table_t *hash_table, unsigned int nb_buckets) {
+/** @brief Initialize the hash table
+ *
+ *  The function must be called once before any other function in this file,
+ *  otherwise the hash table's behavior is undefined.
+ *
+ *  @param queue          The hash table to initialize
+ *  @parem nb_buckets     The number of buckets in the hash table (hash table's size)
+ *  @param find           Generic function to find a particular element in the list
+ *  @param hash_function  A hashing function
+ *
+ *  @return 0 on success, a negative error code on failure
+ */
+int hash_table_init(generic_hash_table_t *hash_table, unsigned int nb_buckets,
+                    int (*find)(void *, void *),
+                    unsigned int (*hash_function)(void *, unsigned int)) {
 
   // Check validity of arguments
   if (hash_table == NULL) {
@@ -18,6 +32,7 @@ int hash_table_init(generic_hash_table_t *hash_table, unsigned int nb_buckets) {
   }
 
   hash_table->nb_buckets = nb_buckets;
+  hash_table->hash_function = hash_function;
 
   // Allocate the buckets
   hash_table->buckets =
@@ -29,7 +44,7 @@ int hash_table_init(generic_hash_table_t *hash_table, unsigned int nb_buckets) {
   // Initialize eack linked list
   int i;
   for (i = 0; i < hash_table->nb_buckets; ++i) {
-    if (linked_list_init(&hash_table->buckets[i]) < 0) {
+    if (linked_list_init(&hash_table->buckets[i], find) < 0) {
       free(hash_table->buckets);
       return -1;
     }
@@ -38,6 +53,13 @@ int hash_table_init(generic_hash_table_t *hash_table, unsigned int nb_buckets) {
   return 0;
 }
 
+/** @brief Add an element to the hash table
+ *
+ *  @param hash_table The hash table
+ *  @param elem       The element to add
+ *
+ *  @return 0 on success, a negative error code on failure
+ */
 int hash_table_add_element(generic_hash_table_t *hash_table, void *elem) {
 
   // Check validity of arguments
@@ -59,11 +81,18 @@ int hash_table_add_element(generic_hash_table_t *hash_table, void *elem) {
   return 0;
 }
 
-void* hash_table_remove_element(generic_hash_table_t* hash_table, void* elem) {
+/** @brief Remove an element in the hash table
+ *
+ *  @param hash_table   A hash table
+ *  @param elem        The element to remove
+ *
+ *  @return The deleted element's value if it was found in the list.
+ *  NULL otherwise
+ */
+void *hash_table_remove_element(generic_hash_table_t *hash_table, void *elem) {
 
   // Check validity of arguments
-  if (hash_table == NULL || hash_table->hash_function == NULL || elem == NULL ||
-      hash_table->compare == NULL) {
+  if (hash_table == NULL || hash_table->hash_function == NULL || elem == NULL) {
     return NULL;
   }
 
@@ -76,11 +105,17 @@ void* hash_table_remove_element(generic_hash_table_t* hash_table, void* elem) {
   return linked_list_delete_node(&hash_table->buckets[bucket], elem);
 }
 
+/** @brief Get an element in the hash table
+ *
+ *  @param hash_table   A hash_table
+ *  @param elem         The element to ger
+ *
+ *  @return The element if it was found in the hash table. NULL otherwise.
+ */
 void *hash_table_get_element(generic_hash_table_t *hash_table, void *elem) {
 
   // Check validity of arguments
-  if (hash_table == NULL || hash_table->hash_function == NULL || elem == NULL ||
-      hash_table->compare == NULL) {
+  if (hash_table == NULL || hash_table->hash_function == NULL || elem == NULL) {
     return NULL;
   }
 

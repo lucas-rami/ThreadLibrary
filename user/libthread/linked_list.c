@@ -11,7 +11,17 @@
 #include <linked_list.h>
 #include <stdlib.h>
 
-int linked_list_init(generic_linked_list_t *list) {
+/** @brief Initialize the linked list
+ *
+ *  The function must be called once before any other function in this file,
+ *  otherwise the list's behavior is undefined.
+ *
+ *  @param queue  The linked list to initialize
+ *  @param find   Generic function to find a particular element in the list
+ *
+ *  @return 0 on success, a negative error code on failure
+ */
+int linked_list_init(generic_linked_list_t *list, int (*find)(void *, void *)) {
 
   // Check validity of arguments
   if (list == NULL) {
@@ -21,9 +31,17 @@ int linked_list_init(generic_linked_list_t *list) {
   // Initialize the linked list
   list->head = NULL;
   list->tail = NULL;
+  list->find = find;
   return 0;
 }
 
+/** @brief Insert a new node at the end of the list
+ *
+ *  @param list   A linked list
+ *  @param value  The new node's value
+ *
+ *  @return 0 on success, a negative error code on failure
+ */
 int linked_list_insert_node(generic_linked_list_t *list, void *value) {
 
   // Check validity of arguments
@@ -54,10 +72,23 @@ int linked_list_insert_node(generic_linked_list_t *list, void *value) {
   return 0;
 }
 
+/** @brief Delete a node in the linked list
+ *
+ *  @param list   A linked list
+ *  @param value  The element to delete
+ *
+ *  @return The deleted node's value if the element was found in the list.
+ *  NULL otherwise
+ */
 void *linked_list_delete_node(generic_linked_list_t *list, void *value) {
 
   // Check validity of arguments
-  if (list == NULL || value == NULL || list->compare == NULL) {
+  if (list == NULL || value == NULL) {
+    return NULL;
+  }
+
+  // Check that the find function exists
+  if (list->find == NULL) {
     return NULL;
   }
 
@@ -66,7 +97,7 @@ void *linked_list_delete_node(generic_linked_list_t *list, void *value) {
 
   // Loop over the list
   while (node != NULL) {
-    if (!list->compare(node->value, value)) {
+    if (list->find(node->value, value)) {
       if (node->prev == NULL && node->next == NULL) {
         // Node is only element in linked list
         list->head = NULL;
@@ -84,17 +115,31 @@ void *linked_list_delete_node(generic_linked_list_t *list, void *value) {
         node->prev->next = node->next;
         node->next->prev = node->prev;
       }
-      return node;
+      void *ret = node->value;
+      free(node);
+      return ret;
     }
     node = node->next;
   }
   return NULL;
 }
 
+/** @brief Get a node in the linked list
+ *
+ *  @param list   A linked list
+ *  @param value  The element to ger
+ *
+ *  @return The element if it was found in the list. NULL otherwise.
+ */
 void *linked_list_get_node(const generic_linked_list_t *list, void *value) {
 
   // Check validity of arguments
-  if (list == NULL || value == NULL || list->compare == NULL) {
+  if (list == NULL || value == NULL) {
+    return NULL;
+  }
+
+  // Check that the find function exists
+  if (list->find == NULL) {
     return NULL;
   }
 
@@ -103,8 +148,8 @@ void *linked_list_get_node(const generic_linked_list_t *list, void *value) {
 
   // Loop over the list
   while (iterator != NULL) {
-    if (!list->compare(iterator->value, value)) {
-      return iterator;
+    if (list->find(iterator->value, value)) {
+      return iterator->value;
     }
     iterator = iterator->next;
   }

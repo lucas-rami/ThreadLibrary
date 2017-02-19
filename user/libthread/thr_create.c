@@ -15,6 +15,8 @@
  *
  *  This function allocates a stack for the new thread and
  *  then invoke the thread_fork system call in an appropriate way.
+ *  The function also create a TCB for the child thread, and put it in the
+ *  TCBs hash table.
  *
  *  @param func The function to be ran by the new thread
  *  @param arg The argument to the function
@@ -36,7 +38,7 @@ int thr_create(void *(*func)(void *), void *arg) {
       return -1;
   }
   tcb->return_status = 0;
-  tcb->kernel_id = -1;
+  tcb->kernel_tid = -1;
 
   // Try to find space for a new stack in the queue
   mutex_lock(&task.queue_mutex);
@@ -53,7 +55,7 @@ int thr_create(void *(*func)(void *), void *arg) {
   child_stack_low = child_stack_high - task.stack_size - PAGE_SIZE;
 
   // Give the child thread a library tid
-  tcb->library_id = task.tid;
+  tcb->library_tid = task.tid;
   ++task.tid;
 
   spinlock_release(&task.state_lock);
@@ -108,11 +110,16 @@ int thr_create(void *(*func)(void *), void *arg) {
     queue_insert_node(&task.stack_queue, child_stack_high);
     mutex_unlock(&task.queue_mutex);
 
-    // Free child's TCB (and remove it from hash table)
-    free(hash_table_remove_element(&task.tcbs, tcb));
+    // Free child's TCB and remove it from hash table
+    hash_table_remove_element(&task.tcbs, tcb);
+    free(tcb);
 
     return -1;
   }
+
+  spinlock_acquire(&tcb->state_lock);
+  tcb->kernel_tid = child_tid;
+  spinlock_release(&tcb->state_lock);
 
   return child_tid;
 }

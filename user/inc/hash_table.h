@@ -8,9 +8,11 @@
 
 #include <data_structures.h>
 
-int hash_table_init(generic_hash_table_t* hash_table, unsigned int nb_buckets);
-int hash_table_add_element(generic_hash_table_t* hash_table, void* elem);
-void* hash_table_remove_element(generic_hash_table_t* hash_table, void* elem);
-void* hash_table_get_element(generic_hash_table_t* hash_table, void* elem);
+int hash_table_init(generic_hash_table_t *hash_table, unsigned int nb_buckets,
+                    int (*find)(void *, void *),
+                    unsigned int (*hash_function)(void *, unsigned int));
+int hash_table_add_element(generic_hash_table_t *hash_table, void *elem);
+void *hash_table_remove_element(generic_hash_table_t *hash_table, void *elem);
+void *hash_table_get_element(generic_hash_table_t *hash_table, void *elem);
 
 #endif /* _HASH_TABLE_H_ */

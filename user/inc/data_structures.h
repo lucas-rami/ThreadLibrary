@@ -22,14 +22,14 @@ typedef struct queue {
 
 typedef struct linked_list {
   generic_double_node_t *head, *tail;
-  int (*compare)(void* node1, void* node2);
+  int (*find)(void* elem, void* value);
 } generic_linked_list_t;
 
 typedef struct hash_table {
   generic_linked_list_t *buckets;
   unsigned int nb_buckets;
   unsigned int (*hash_function)(void* elem, unsigned int nb_buckets);
-  int (*compare)(void* node1, void* node2);
+  int (*find)(void* elem, void* value);
 } generic_hash_table_t;
 
 #endif /* _DATA_STRUCTURES_H_ */

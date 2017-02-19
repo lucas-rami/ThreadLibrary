@@ -50,9 +50,9 @@ typedef struct tcb {
   // Thread's return status
   int return_status;
   // Thread's id (provided by the kernel)
-  int kernel_id;
+  int kernel_tid;
   // Thread's if (provided by the thread library)
-  int library_id;
+  int library_tid;
   // Lowest address of thread's stack space
   unsigned int *stack_low;
   // Highest address of thread's stack space

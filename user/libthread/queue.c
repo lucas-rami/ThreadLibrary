@@ -11,32 +11,13 @@
 #include <queue.h>
 #include <stdlib.h>
 
-
-/** @brief Initialize the queue
- *
- *  @param queue The queeu to be initialized
- *
- *  @return 0 on success, a negative error code on failure
- */
-int queue_init(generic_queue_t *queue) {
-
-  // Check validity of argument
-  if (queue == NULL) {
-    return -1;
-  }
-  queue->head = NULL;
-  queue->tail = NULL;
-  return 0;
-}
-
-
 /** @brief Makes a generic_node_t type node to be added in the queue
  *
  *  @param value The value to be stored in the list casted as void*
  *
  *  @return NULL on error, or a pointer to the generic_node_t type new node
  */
-generic_node_t *make_node( void *value ) {
+static generic_node_t *make_node( void *value ) {
 
   // Allocate the space for the new node
   generic_node_t *new_node = ( generic_node_t *) malloc(
@@ -52,6 +33,23 @@ generic_node_t *make_node( void *value ) {
   new_node->next = NULL;
 
   return new_node;
+}
+
+/** @brief Initialize the queue
+ *
+ *  @param queue The queue to be initialized
+ *
+ *  @return 0 on success, a negative error code on failure
+ */
+int queue_init(generic_queue_t *queue) {
+
+  // Check validity of argument
+  if (queue == NULL) {
+    return -1;
+  }
+  queue->head = NULL;
+  queue->tail = NULL;
+  return 0;
 }
 
 /** @brief Inserts a generic_node_t type node at the tail end of the queue

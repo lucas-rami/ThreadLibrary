@@ -35,10 +35,9 @@ int thr_init(unsigned int size) {
   // Initialize the task's global state
 
   // Initialize data structures
-  if (queue_init(&task.stack_queue) < 0 || hash_table_init(&task.tcbs, NB_BUCKETS_TCB) < 0) {
+  if (queue_init(&task.stack_queue) < 0 || hash_table_init(&task.tcbs, NB_BUCKETS_TCB, find_tcb, hash_function_tcb) < 0) {
     return -1;
   }
-  task.tcbs.compare = compare_tcb;
   task.tcbs.hash_function = hash_function_tcb;
 
   // Initialize spinlock/mutexes
@@ -59,8 +58,8 @@ int thr_init(unsigned int size) {
   }
 
   tcb->return_status = 0;
-  tcb->kernel_id = gettid();
-  tcb->library_id = 0;
+  tcb->kernel_tid = gettid();
+  tcb->library_tid = 0;
   tcb->stack_low = task.stack_lowest;
   tcb->stack_high = task.stack_highest;
 
@@ -83,18 +82,4 @@ int thr_init(unsigned int size) {
   swexn(addr_exception_stack, multithread_handler, NULL, NULL);
 
   return 0;
-}
-
-int compare_tcb(void* tcb1, void* tcb2) {
-  tcb_t* t1 = tcb1;
-  tcb_t* t2 = tcb2;
-  if (t1->library_id == t2->library_id) {
-    return 0;
-  }
-  return 1;
-}
-
-unsigned int hash_function_tcb(void* tcb, unsigned int nb_buckets) {
-  tcb_t* t = tcb;
-  return t->library_id % nb_buckets;
 }

@@ -13,7 +13,9 @@
 
 void stub(void *(*func)(void *), void *arg, void* addr_exception_stack);
 int thread_fork(void *child_esp);
-int compare_tcb(void* tcb1, void* tcb2);
+
+tcb_t* get_tcb();
+int find_tcb(void* tcb, void* tid);
 unsigned int hash_function_tcb(void* tcb, unsigned int nb_buckets);
 
 #endif /* THR_INTERNALS_H */
