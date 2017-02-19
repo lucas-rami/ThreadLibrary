@@ -32,7 +32,7 @@ int thr_create(void *(*func)(void *), void *arg) {
 
   // Try to find space for a new stack in the queue
   mutex_lock(&task.queue_mutex);
-  child_stack_high = delete_node(&task.stack_queue);
+  child_stack_high = queue_delete_node(&task.stack_queue);
   mutex_unlock(&task.queue_mutex);
 
   // Define child_stack_low/high and update global state if necessary
@@ -49,7 +49,7 @@ int thr_create(void *(*func)(void *), void *arg) {
   if (new_pages(child_stack_low, (unsigned int) child_stack_high - (unsigned int) child_stack_low) < 0) {
     // If we could not allocate stack space, put them in the queue
     mutex_lock(&task.queue_mutex);
-    insert_node(&task.stack_queue, child_stack_high);
+    queue_insert_node(&task.stack_queue, child_stack_high);
     mutex_unlock(&task.queue_mutex);
     return -1;
   }
@@ -74,7 +74,7 @@ int thr_create(void *(*func)(void *), void *arg) {
     remove_pages(child_stack_high);
     // Put stack space in the queue
     mutex_lock(&task.queue_mutex);
-    insert_node(&task.stack_queue, child_stack_high);
+    queue_insert_node(&task.stack_queue, child_stack_high);
     mutex_unlock(&task.queue_mutex);
     return -1;
   }

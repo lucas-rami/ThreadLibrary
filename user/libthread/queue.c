@@ -11,6 +11,25 @@
 #include <queue.h>
 #include <stdlib.h>
 
+
+/** @brief Initialize the queue
+ *
+ *  @param queue The queeu to be initialized
+ *
+ *  @return 0 on success, a negative error code on failure
+ */
+int queue_init(generic_queue_t *queue) {
+
+  // Check validity of argument
+  if (queue == NULL) {
+    return -1;
+  }
+  queue->head = NULL;
+  queue->tail = NULL;
+  return 0;
+}
+
+
 /** @brief Makes a generic_node_t type node to be added in the queue
  *
  *  @param value The value to be stored in the list casted as void*
@@ -68,7 +87,7 @@ int insert_node( generic_queue_t *list, void *value ) {
     return 0;
   }
 
-  // Add the new node to the end of the list 
+  // Add the new node to the end of the list
   (*tail)->next = new_node;
 
   return 0;
@@ -114,4 +133,4 @@ void *delete_node( generic_queue_t *list ) {
   tmp = NULL;
 
   return ret;
-} 
+}

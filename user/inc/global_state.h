@@ -6,6 +6,7 @@
 #ifndef _GLOBAL_STATE_H_
 #define _GLOBAL_STATE_H_
 
+#include <data_structures.h>
 #include <mutex_type.h>
 #include <syscall.h>
 
@@ -20,13 +21,25 @@ typedef struct task {
   unsigned int *stack_highest;
   // Number of threads running in the task
   unsigned int nb_threads;
+  // Thread library tids
+  unsigned int tid;
   // Spinlock for task's state access
   spinlock_t state_lock;
+
+  /*------------------------------*/
 
   // Queue for free stack spaces
   generic_queue_t stack_queue;
   // Mutex for queue access
   mutex_t queue_mutex;
+
+  /*------------------------------*/
+
+  // Data structure holding the TCB of all threads in the task
+  generic_hash_table_t tcbs;
+  // Mutex for TCBs access
+  mutex_t tcbs_mutex;
+
 
 } task_t;
 
