@@ -1,3 +1,8 @@
+/** @file global_state.h
+ *  @brief This file defines a data structure for the task's state
+ *  @author akanjani, lramire1
+ */
+
 #ifndef _GLOBAL_STATE_H_
 #define _GLOBAL_STATE_H_
 
@@ -6,26 +11,26 @@
 
 typedef char page_state;
 
-typedef struct task_state {
+typedef struct task {
   // Size for each thread's stack
   unsigned int stack_size;
   // Lowest address of task's threads stacks (initialized by autostack())
-  void *stack_lowest;
+  unsigned int *stack_lowest;
   // Lowest address of task's threads stacks (initialized by autostack())
-  void *stack_highest;
+  unsigned int *stack_highest;
   // Number of threads running in the task
   unsigned int nb_threads;
-  // Array containing the state (FREE or ALLOCATED) for each stack page
-  page_state *stacks;
-  // Length of stacks array
-  unsigned int stacks_len;
-  // Position at which to store a new stack in the 'stacks' array
-  unsigned int stacks_offset;
-  // Mutex for this structure
-  mutex_t mutex;
-} task_state_t;
+  // Spinlock for task's state access
+  spinlock_t state_lock;
 
-task_state_t task_state;
+  // Queue for free stack spaces
+  generic_queue_t stack_queue;
+  // Mutex for queue access
+  mutex_t queue_mutex;
+
+} task_t;
+
+task_t task;
 
 int exception_handler_stack[PAGE_SIZE];
 
