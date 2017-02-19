@@ -10,12 +10,14 @@
 #include <linked_list.h>
 #include <stdlib.h>
 
-int hash_table_init(generic_hash_table_t *hash_table) {
+int hash_table_init(generic_hash_table_t *hash_table, unsigned int nb_buckets) {
 
   // Check validity of arguments
   if (hash_table == NULL) {
     return -1;
   }
+
+  hash_table->nb_buckets = nb_buckets;
 
   // Allocate the buckets
   hash_table->buckets =

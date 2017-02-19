@@ -8,7 +8,7 @@
 
 #include <data_structures.h>
 
-int hash_table_init(generic_hash_table_t* hash_table);
+int hash_table_init(generic_hash_table_t* hash_table, unsigned int nb_buckets);
 int hash_table_add_element(generic_hash_table_t* hash_table, void* elem);
 void* hash_table_remove_element(generic_hash_table_t* hash_table, void* elem);
 void* hash_table_get_element(generic_hash_table_t* hash_table, void* elem);

@@ -1,5 +1,6 @@
 /** @file global_state.h
- *  @brief This file defines a data structure for the task's state
+ *  @brief This file defines data structures for the task's state and thread's
+ * TCB
  *  @author akanjani, lramire1
  */
 
@@ -7,12 +8,13 @@
 #define _GLOBAL_STATE_H_
 
 #include <data_structures.h>
-#include <mutex_type.h>
+#include <mutex.h>
 #include <syscall.h>
 
 typedef char page_state;
 
 typedef struct task {
+
   // Size for each thread's stack
   unsigned int stack_size;
   // Lowest address of task's threads stacks (initialized by autostack())
@@ -20,6 +22,7 @@ typedef struct task {
   // Lowest address of task's threads stacks (initialized by autostack())
   unsigned int *stack_highest;
   // Number of threads running in the task
+  // TODO: Not sure we really need this...
   unsigned int nb_threads;
   // Thread library tids
   unsigned int tid;
@@ -40,8 +43,29 @@ typedef struct task {
   // Mutex for TCBs access
   mutex_t tcbs_mutex;
 
-
 } task_t;
+
+typedef struct tcb {
+
+  // Thread's return status
+  int return_status;
+  // Thread's id (provided by the kernel)
+  int kernel_id;
+  // Thread's if (provided by the thread library)
+  int library_id;
+  // Lowest address of thread's stack space
+  unsigned int *stack_low;
+  // Highest address of thread's stack space
+  unsigned int *stack_high;
+  // Spinlock for tcb's state access
+  spinlock_t state_lock;
+
+  /*------------------------------*/
+
+  // TODO: We will very probably need to add fields here to
+  // implement thr_exit() and thr_join()
+
+} tcb_t;
 
 task_t task;
 
