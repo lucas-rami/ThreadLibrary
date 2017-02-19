@@ -27,6 +27,6 @@ typedef struct task_state {
 
 task_state_t task_state;
 
-char exception_handler_stack[PAGE_SIZE];
+int exception_handler_stack[PAGE_SIZE];
 
 #endif /* _GLOBAL_STATE_H_ */

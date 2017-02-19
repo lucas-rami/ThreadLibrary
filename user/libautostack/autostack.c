@@ -4,20 +4,26 @@
  */
 
 #include <global_state.h>
+#include <syscall.h>
+#include <page_fault_handler.h>
+#include <stddef.h>
+#include <simics.h> 
+#include <stdlib.h>
 
 void install_autostack( void *stack_high, void *stack_low ) {
   task_state.stack_lowest = stack_low;
   task_state.stack_highest = stack_high;
-  // Register a handler using swexn
-  /*if ( 
-    swexn( exception_handler_stack, singlethread_handler, NULL, NULL ) < 0 ) {
+  // Registerk_state.a handler using swexn
+  lprintf( "autostack called" );
+
+  // exception_handler_stack = ( char* ) malloc( sizeof(char) * PAGE_SIZE );
+  lprintf( "The excpetion handler stack starts at address %p\n", exception_handler_stack );
+
+  if ( 
+    swexn( exception_handler_stack + PAGE_SIZE, singlethread_handler, NULL, NULL ) < 0 ) {
+    lprintf( "registration of exception handler failed\n" );
     // Can't register the handler
     // TODO: assert?
-  }*/
+  }
+  lprintf( "handler should be registered" );
 }
-
-/*void singlethread_handler( void *arg, ureg_t *ureg ) {
-  // Find the page aligned boundaries and then allocate whatever number of 
-  // pages we have to
-  // Also decide for a sta
-}*/

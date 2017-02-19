@@ -93,7 +93,7 @@ SYSCALL_OBJS = vanish.o set_status.o print.o deschedule.o exec.o fork.o getchar.
 ###########################################################################
 # Object files for your automatic stack handling
 ###########################################################################
-AUTOSTACK_OBJS = autostack.o
+AUTOSTACK_OBJS = autostack.o page_fault_handler.o
 
 ###########################################################################
 # Data files provided by course staff to be included in the RAM disk
