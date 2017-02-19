@@ -9,6 +9,7 @@
 #include <thr_internals.h>
 #include <thread.h>
 #include <simics.h>
+#include <page_fault_handler.h>
 
 /** @brief Create a new thread to run func(arg)
  *

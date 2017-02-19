@@ -12,6 +12,5 @@
 
 void stub(void *(*func)(void *), void *arg, void* addr_exception_stack);
 int thread_fork(void *child_esp);
-void multithread_handler(void *arg, ureg_t *ureg);
 
 #endif /* THR_INTERNALS_H */

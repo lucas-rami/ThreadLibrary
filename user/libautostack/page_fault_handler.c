@@ -1,16 +1,30 @@
+/** @file page_fault_handler.c
+ *
+ *  @brief This file contains the implementation of software exception 
+ *   handlers for single threaded tasks and multi threaded ones
+ *
+ *  @author akanjani, lramire1
+ */
+
 #include <global_state.h>
 #include <syscall.h>
 #include <ureg.h>
 #include <stddef.h>
 #include <simics.h>
 
+/** @brief The exception handler for single threaded tasks
+ *
+ *  This function handles page faults and attempts to grow the stack as 
+ *  appropriate.
+ *
+ *  @param arg A void pointer which was specified when the handler was 
+ *   registered
+ *  @param ureg A ureg_t pointer to the ureg area, which will is stored on
+ *   the exception stack and contains the register values
+ *
+ *  @return void
+ */
 void singlethread_handler(void* arg, ureg_t *ureg) {
-  // MAGIC_BREAK;
-
-  lprintf( "Exception handler called\n" );
-
-
-  // MAGIC_BREAK;
 
   if ( ureg->cause == SWEXN_CAUSE_PAGEFAULT ) {
 
@@ -19,31 +33,39 @@ void singlethread_handler(void* arg, ureg_t *ureg) {
 
     // Calculate the Number of pages required
     int num_of_pages_reqd =
-      ( ( unsigned int )task_state.stack_lowest / PAGE_SIZE ) - 
+      ( ( unsigned int )task.stack_lowest / PAGE_SIZE ) - 
       ( ureg->cr2 / PAGE_SIZE );
 
-    lprintf( "The stack lowest is %p and the fault address is %p\n", task_state.stack_lowest, (void *)ureg->cr2 );
-    lprintf( "The number of pages reqd is %d\n", num_of_pages_reqd );
+    int growth_size = num_of_pages_reqd * PAGE_SIZE;
 
-
-    MAGIC_BREAK;
-    if ( new_pages( task_state.stack_lowest, num_of_pages_reqd * PAGE_SIZE ) < 0 ) {
-
-      lprintf( "New pages failed\n" );
+    if ( new_pages( ( (char*)task.stack_lowest - growth_size ),
+         growth_size ) < 0 ) {
       // Can't grow the stack further. Something went really wrong
       // Revert back to default behaviour
       vanish();
     }
+    task.stack_lowest =  (void *)( (char*)task.stack_lowest - growth_size );
   }
-  lprintf( "Returning from exception handler\n" );
-  MAGIC_BREAK;
 
   // Register the handler again
-  if (
-    swexn( exception_handler_stack + PAGE_SIZE, singlethread_handler, NULL, ureg ) < 0 ) {
+  if ( swexn( exception_handler_stack + PAGE_SIZE,
+       singlethread_handler, NULL, ureg ) < 0 ) {
     // Can't register the handler
     // TODO: assert?
-
-    lprintf( "Exception handler couldnt be re installed\n" );
   }
 }
+
+/** @brief Exception handler for multithreaded application
+ *
+ *  The function simply vanish the current task.
+ *
+ *  @param arg  Optional argument for exception handler
+ *  @param ureg Structure holding information about the exception's cause
+ *   and the values of some registers
+ * 
+ *  @return void
+ */
+ void multithread_handler(void* arg, ureg_t *ureg) {
+   vanish();
+ }
+
