@@ -1,7 +1,7 @@
 /** @file autostack.c
  *
  *  @brief This file contains the implementation of the install_autostack
- *   function which initializes the global state registers the software 
+ *   function which initializes the global state registers the software
  *   exception handler.
  *
  *  @author akanjani, lramire1

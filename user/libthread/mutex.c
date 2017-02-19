@@ -33,7 +33,7 @@ static void thr_enqueue(mutex_t *mp, int thr_id) {
   spinlock_release(&mp->lock);
 
   // Insert the current thread into the waiting queue
-  insert_node(&mp->waiting_queue, (void *)thr_id);
+  queue_insert_node(&mp->waiting_queue, (void *)thr_id);
 
   // Release the queue spinlock
   spinlock_release(&mp->queue_lock);
@@ -62,7 +62,7 @@ static void thr_dequeue(mutex_t *mp) {
   spinlock_acquire(&mp->queue_lock);
 
   // Make the the list's head thread runnable
-  int thr_id = (int)delete_node(&mp->waiting_queue);
+  int thr_id = (int)queue_delete_node(&mp->waiting_queue);
   while (make_runnable(thr_id) < 0) {
     continue;
   }

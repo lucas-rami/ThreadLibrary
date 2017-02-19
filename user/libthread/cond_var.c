@@ -113,7 +113,7 @@ void cond_wait( cond_t *cv, mutex_t *mp ) {
   spinlock_acquire( &cv->spinlock );
 
   // Add this thread to the waiting queue of this condition variable
-  insert_node( &cv->waiting_queue, (void*)gettid() );
+  queue_insert_node( &cv->waiting_queue, (void*)gettid() );
 
   // Release the mutex so that other threads can run now
   mutex_unlock( mp );
@@ -151,7 +151,7 @@ void cond_signal( cond_t *cv ) {
 
   if ( cv->waiting_queue.head != NULL ) {
     // waiting queue is not elockty
-    void *tid = delete_node( &cv->waiting_queue );
+    void *tid = queue_delete_node( &cv->waiting_queue );
 
     if ( !tid ) {
       // Queue is elockty or something went wrong
@@ -190,7 +190,7 @@ void cond_broadcast( cond_t *cv ) {
   // Loop through the whole waiting queue
   while ( cv->waiting_queue.head != NULL ) {
     // waiting queue is not elockty
-    void *tid = delete_node( &cv->waiting_queue );
+    void *tid = queue_delete_node( &cv->waiting_queue );
 
     if ( !tid ) {
       // Something went wrong

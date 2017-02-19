@@ -60,7 +60,7 @@ int queue_init(generic_queue_t *queue) {
  *
  *  @return 0 on success, a negative error code on failure
  */
-int insert_node( generic_queue_t *list, void *value ) {
+int queue_insert_node( generic_queue_t *list, void *value ) {
 
   generic_node_t **head = &list->head;
   generic_node_t **tail = &list->tail;
@@ -99,7 +99,7 @@ int insert_node( generic_queue_t *list, void *value ) {
  *  @return void* The value of the element in the deleted node cast as a void*
  *   or NULL on error
  */
-void *delete_node( generic_queue_t *list ) {
+void *queue_delete_node( generic_queue_t *list ) {
 
   generic_node_t **head = &list->head;
   generic_node_t **tail = &list->tail;
