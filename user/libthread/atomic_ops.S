@@ -4,7 +4,6 @@
  */
 
 .global atomic_exchange
-.global atomic_cmp_xchg
 
 atomic_exchange:
   movl  4(%esp), %edx   // Move &mutex_lock (first argument) into edx

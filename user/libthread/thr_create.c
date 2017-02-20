@@ -117,6 +117,7 @@ int thr_create(void *(*func)(void *), void *arg) {
     return -1;
   }
 
+  // Update the child's TCB with its kernel issued TID
   spinlock_acquire(&tcb->state_lock);
   tcb->kernel_tid = child_tid;
   spinlock_release(&tcb->state_lock);
