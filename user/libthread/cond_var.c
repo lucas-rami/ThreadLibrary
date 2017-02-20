@@ -116,6 +116,8 @@ void cond_wait( cond_t *cv, mutex_t *mp ) {
   queue_insert_node( &cv->waiting_queue, (void*)gettid() );
 
   // Release the mutex so that other threads can run now
+  /* TODO; Could we put mutex_unlock above the call to queue_insert_node() ?
+   * We don't want to hold the mutex for too long... */
   mutex_unlock( mp );
 
   spinlock_release( &cv->spinlock );
@@ -150,11 +152,11 @@ void cond_signal( cond_t *cv ) {
   spinlock_acquire( &cv->spinlock );
 
   if ( cv->waiting_queue.head != NULL ) {
-    // waiting queue is not elockty
+    // waiting queue is not empty
     void *tid = queue_delete_node( &cv->waiting_queue );
 
     if ( !tid ) {
-      // Queue is elockty or something went wrong
+      // Queue is empty or something went wrong
       printf( "Error while deleting from the waiting queue\n" );
     }
 
