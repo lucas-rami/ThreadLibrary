@@ -4,12 +4,12 @@
  */
 
 #include <global_state.h>
+#include <hash_table.h>
+#include <page_fault_handler.h>
 #include <stdlib.h>
 #include <syscall.h>
 #include <thr_internals.h>
 #include <thread.h>
-#include <hash_table.h>
-#include <page_fault_handler.h>
 
 /** @brief Create a new thread to run func(arg)
  *
@@ -30,14 +30,24 @@ int thr_create(void *(*func)(void *), void *arg) {
     return -1;
   }
 
+  // Boundaries of child's stack
   unsigned int *child_stack_low, *child_stack_high;
 
   // Create new TCB for child thread
-  tcb_t* tcb = malloc(sizeof(tcb_t));
+  tcb_t *tcb = malloc(sizeof(tcb_t));
   if (tcb == NULL) {
-      return -1;
+    return -1;
   }
-  tcb->return_status = 0;
+
+  // Initialize the TCB's mutex, condition variable and spinlock
+  if (spinlock_init(&tcb->state_lock) < 0 ||
+      cond_init(&tcb->cond_var_state) < 0 ||
+      mutex_init(&tcb->mutex_state) < 0) {
+    free(tcb);
+    return -1;
+  }
+
+  tcb->return_status = NULL;
   tcb->kernel_tid = -1;
 
   // Try to find space for a new stack in the queue
@@ -65,7 +75,8 @@ int thr_create(void *(*func)(void *), void *arg) {
   tcb->stack_high = child_stack_high;
 
   // Allocate the stack for the child
-  if (new_pages(child_stack_low, (unsigned int) child_stack_high - (unsigned int) child_stack_low) < 0) {
+  if (new_pages(child_stack_low, (unsigned int)child_stack_high -
+                                     (unsigned int)child_stack_low) < 0) {
 
     // If we could not allocate stack space, put them in the queue
     mutex_lock(&task.queue_mutex);
@@ -77,6 +88,11 @@ int thr_create(void *(*func)(void *), void *arg) {
 
     return -1;
   }
+
+  // Put the child's TCB in the hash table
+  mutex_lock(&task.tcbs_mutex);
+  hash_table_add_element(&task.tcbs, tcb);
+  mutex_unlock(&task.tcbs_mutex);
 
   // Initialize the child's stack (at lower addresses than the exception stack)
   unsigned int *child_esp =
@@ -92,11 +108,6 @@ int thr_create(void *(*func)(void *), void *arg) {
   // Empty space for "virtual" stub's calling function
   --child_esp;
   *child_esp = (unsigned int)stub; // Address of stub function
-
-  // Put the child's TCB in the hash table
-  mutex_lock(&task.tcbs_mutex);
-  hash_table_add_element(&task.tcbs, tcb);
-  mutex_unlock(&task.tcbs_mutex);
 
   // Create the child thread with thread_fork()
   int child_tid;
@@ -122,7 +133,7 @@ int thr_create(void *(*func)(void *), void *arg) {
   tcb->kernel_tid = child_tid;
   spinlock_release(&tcb->state_lock);
 
-  return child_tid;
+  return tcb->library_tid;
 }
 
 /** @brief Stub function for newly created thread
@@ -141,6 +152,6 @@ void stub(void *(*func)(void *), void *arg, void *addr_exception_stack) {
 
   swexn(addr_exception_stack, multithread_handler, NULL, NULL);
 
-  void* ret = func(arg);
+  void *ret = func(arg);
   thr_exit(ret);
 }

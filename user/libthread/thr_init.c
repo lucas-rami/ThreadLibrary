@@ -37,46 +37,46 @@ int thr_init(unsigned int size) {
           0) {
     return -1;
   }
-  task.tcbs.hash_function = hash_function_tcb;
 
   // Initialize spinlock/mutexes
   if (spinlock_init(&task.state_lock) < 0 ||
-      mutex_init(&task.queue_mutex) < 0) {
+      mutex_init(&task.queue_mutex) < 0 || mutex_init(&task.tcbs_mutex) < 0) {
     return -1;
-  }
-  if (mutex_init(&task.tcbs_mutex)) {
-    mutex_destroy(&task.queue_mutex);
   }
 
   // Create TCB for current task
   tcb_t *tcb = malloc(sizeof(tcb_t));
   if (tcb == NULL) {
-    mutex_destroy(&task.queue_mutex);
-    mutex_destroy(&task.tcbs_mutex);
     return -1;
   }
 
-  tcb->return_status = 0;
+  // Initialize the TCB
+  tcb->return_status = NULL;
   tcb->kernel_tid = gettid();
   tcb->library_tid = 0;
   tcb->stack_low = task.stack_lowest;
   tcb->stack_high = task.stack_highest;
+  tcb->thread_state = RUNNING;
 
-  // Initialize the TCB's spinlock and add the current thread's TCB to the hash
-  // table
+  // Initialize the TCB's mutex, condition variable and spinlock
   if (spinlock_init(&tcb->state_lock) < 0 ||
-      hash_table_add_element(&task.tcbs, tcb) < 0) {
+      cond_init(&tcb->cond_var_state) < 0 ||
+      mutex_init(&tcb->mutex_state) < 0) {
     free(tcb);
-    mutex_destroy(&task.queue_mutex);
-    mutex_destroy(&task.tcbs_mutex);
     return -1;
   }
 
-  // Finish to Initialize the task's global state
+  // Add the current thread's TCB to the hash table
+  if (hash_table_add_element(&task.tcbs, tcb) < 0) {
+    free(tcb);
+    return -1;
+  }
+
+  // Finish to initialize the task's global state
   task.stack_size = size;
   task.nb_threads = 1;
   task.tid = 1;
-  task.stack_highest_childs = task.stack_lowest;
+  task.stack_highest_childs = task.stack_lowest - PAGE_SIZE;
   task.root_tcb = tcb;
 
   // Register new exception handler (no automatic stack growth)
