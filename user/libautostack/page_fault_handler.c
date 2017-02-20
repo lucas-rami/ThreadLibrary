@@ -1,6 +1,6 @@
 /** @file page_fault_handler.c
  *
- *  @brief This file contains the implementation of software exception 
+ *  @brief This file contains the implementation of software exception
  *   handlers for single threaded tasks and multi threaded ones
  *
  *  @author akanjani, lramire1
@@ -14,10 +14,10 @@
 
 /** @brief The exception handler for single threaded tasks
  *
- *  This function handles page faults and attempts to grow the stack as 
+ *  This function handles page faults and attempts to grow the stack as
  *  appropriate.
  *
- *  @param arg A void pointer which was specified when the handler was 
+ *  @param arg A void pointer which was specified when the handler was
  *   registered
  *  @param ureg A ureg_t pointer to the ureg area, which will is stored on
  *   the exception stack and contains the register values
@@ -33,7 +33,7 @@ void singlethread_handler(void* arg, ureg_t *ureg) {
 
     // Calculate the Number of pages required
     int num_of_pages_reqd =
-      ( ( unsigned int )task.stack_lowest / PAGE_SIZE ) - 
+      ( ( unsigned int )task.stack_lowest / PAGE_SIZE ) -
       ( ureg->cr2 / PAGE_SIZE );
 
     int growth_size = num_of_pages_reqd * PAGE_SIZE;
@@ -62,10 +62,9 @@ void singlethread_handler(void* arg, ureg_t *ureg) {
  *  @param arg  Optional argument for exception handler
  *  @param ureg Structure holding information about the exception's cause
  *   and the values of some registers
- * 
+ *
  *  @return void
  */
  void multithread_handler(void* arg, ureg_t *ureg) {
-   vanish();
+   task_vanish(-1);
  }
-
