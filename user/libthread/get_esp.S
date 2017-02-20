@@ -5,6 +5,6 @@
 
 .global get_esp
 
-get_tcb:
+get_esp:
   movl %esp, %eax
   ret
