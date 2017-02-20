@@ -14,6 +14,7 @@
 void stub(void *(*func)(void *), void *arg, void* addr_exception_stack);
 int thread_fork(void *child_esp);
 
+unsigned int get_esp();
 tcb_t* get_tcb();
 int find_tcb(void* tcb, void* tid);
 unsigned int hash_function_tcb(void* tcb, unsigned int nb_buckets);

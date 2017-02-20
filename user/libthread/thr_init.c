@@ -12,9 +12,6 @@
 
 #define NB_BUCKETS_TCB 16
 
-// TEMPORARY //
-void *addr_exception_stack = NULL;
-
 /** @brief Initialize the thread library
  *
  *  This function should be called exactly once before any other
@@ -35,7 +32,9 @@ int thr_init(unsigned int size) {
   // Initialize the task's global state
 
   // Initialize data structures
-  if (queue_init(&task.stack_queue) < 0 || hash_table_init(&task.tcbs, NB_BUCKETS_TCB, find_tcb, hash_function_tcb) < 0) {
+  if (queue_init(&task.stack_queue) < 0 ||
+      hash_table_init(&task.tcbs, NB_BUCKETS_TCB, find_tcb, hash_function_tcb) <
+          0) {
     return -1;
   }
   task.tcbs.hash_function = hash_function_tcb;
@@ -77,9 +76,11 @@ int thr_init(unsigned int size) {
   task.stack_size = size;
   task.nb_threads = 1;
   task.tid = 1;
+  task.stack_highest_childs = task.stack_lowest;
+  task.root_tcb = tcb;
 
   // Register new exception handler (no automatic stack growth)
-  swexn(addr_exception_stack, multithread_handler, NULL, NULL);
+  swexn(exception_handler_stack, multithread_handler, NULL, NULL);
 
   return 0;
 }

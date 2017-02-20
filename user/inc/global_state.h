@@ -11,7 +11,27 @@
 #include <mutex.h>
 #include <syscall.h>
 
-typedef char page_state;
+typedef struct tcb {
+
+  // Thread's return status
+  int return_status;
+  // Thread's id (provided by the kernel)
+  int kernel_tid;
+  // Thread's if (provided by the thread library)
+  int library_tid;
+  // Lowest address of thread's stack space
+  unsigned int *stack_low;
+  // Highest address of thread's stack space
+  unsigned int *stack_high;
+  // Spinlock for tcb's state access
+  spinlock_t state_lock;
+
+  /*------------------------------*/
+
+  // TODO: We will very probably need to add fields here to
+  // implement thr_exit() and thr_join()
+
+} tcb_t;
 
 typedef struct task {
 
@@ -21,6 +41,9 @@ typedef struct task {
   unsigned int *stack_lowest;
   // Lowest address of task's threads stacks (initialized by autostack())
   unsigned int *stack_highest;
+  // Highest address for (grand)child threads of first thread
+  unsigned int* stack_highest_childs;
+
   // Number of threads running in the task
   // TODO: Not sure we really need this...
   unsigned int nb_threads;
@@ -43,29 +66,14 @@ typedef struct task {
   // Mutex for TCBs access
   mutex_t tcbs_mutex;
 
-} task_t;
-
-typedef struct tcb {
-
-  // Thread's return status
-  int return_status;
-  // Thread's id (provided by the kernel)
-  int kernel_tid;
-  // Thread's if (provided by the thread library)
-  int library_tid;
-  // Lowest address of thread's stack space
-  unsigned int *stack_low;
-  // Highest address of thread's stack space
-  unsigned int *stack_high;
-  // Spinlock for tcb's state access
-  spinlock_t state_lock;
-
   /*------------------------------*/
 
-  // TODO: We will very probably need to add fields here to
-  // implement thr_exit() and thr_join()
+  // TCB of root thread in the task
+  /* Even if the root thread exits, we should never reallocate its
+   * stack address space for other threads stacks, or get_tcb() might break */ 
+  tcb_t* root_tcb;
 
-} tcb_t;
+} task_t;
 
 task_t task;
 
