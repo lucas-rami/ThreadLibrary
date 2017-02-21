@@ -18,19 +18,29 @@
 
 typedef struct tcb {
 
-  // Thread's return status
-  void* return_status;
-  // Thread's id (provided by the kernel)
-  // TODO: Not sure we even need it
-  int kernel_tid;
-  // Thread's if (provided by the thread library)
+  // Thread's id (provided by the thread library)
   int library_tid;
   // Lowest address of thread's stack space
   unsigned int *stack_low;
   // Highest address of thread's stack space
   unsigned int *stack_high;
-  // Spinlock for tcb's state access
-  spinlock_t state_lock;
+  // Thread's return status
+  void* return_status;
+  // Thread's id (provided by the kernel)
+  int kernel_tid;
+
+  /* library_tid, stack_low and stack_high do not need to be protected by a
+   * lock since their value is defined before the thread is created.
+   *
+   * return_status is written to only by the thread owning this TCB, so
+   * no lock is needed for it neither.
+   *
+   * kernel_tid may be written to by only two threads: the thread owning
+   * this TCB and its parent thread. Each of these thread will change the
+   * value for this field (initialized as -1 by thr_create()) at most once,
+   * and in the case that both threads change this field, they will replace
+   * it by the same value. Hence we do not need a lock to protect it. */
+
 
   /*------------------------------*/
 
@@ -83,14 +93,14 @@ typedef struct task {
   /*------------------------------*/
 
   // TCB of root thread in the task
-  /* Even if the root thread exits, we should not reallocate its
-   * stack address space for other threads stacks */
   tcb_t* root_tcb;
 
 } task_t;
 
+// GLobal state for the current task
 task_t task;
 
+// Page_sized exception stack for root thread in task
 int exception_handler_stack[PAGE_SIZE];
 
 #endif /* _GLOBAL_STATE_H_ */

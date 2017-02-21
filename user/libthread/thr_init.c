@@ -59,8 +59,7 @@ int thr_init(unsigned int size) {
   tcb->thread_state = RUNNING;
 
   // Initialize the TCB's mutex, condition variable and spinlock
-  if (spinlock_init(&tcb->state_lock) < 0 ||
-      cond_init(&tcb->cond_var_state) < 0 ||
+  if (cond_init(&tcb->cond_var_state) < 0 ||
       mutex_init(&tcb->mutex_state) < 0) {
     free(tcb);
     return -1;

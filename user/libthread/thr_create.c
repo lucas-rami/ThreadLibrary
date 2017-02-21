@@ -40,8 +40,7 @@ int thr_create(void *(*func)(void *), void *arg) {
   }
 
   // Initialize the TCB's mutex, condition variable and spinlock
-  if (spinlock_init(&tcb->state_lock) < 0 ||
-      cond_init(&tcb->cond_var_state) < 0 ||
+  if (cond_init(&tcb->cond_var_state) < 0 ||
       mutex_init(&tcb->mutex_state) < 0) {
     free(tcb);
     return -1;
@@ -129,9 +128,7 @@ int thr_create(void *(*func)(void *), void *arg) {
   }
 
   // Update the child's TCB with its kernel issued TID
-  spinlock_acquire(&tcb->state_lock);
   tcb->kernel_tid = child_tid;
-  spinlock_release(&tcb->state_lock);
 
   return tcb->library_tid;
 }
