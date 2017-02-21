@@ -50,6 +50,7 @@ int thr_create(void *(*func)(void *), void *arg) {
 
   tcb->return_status = NULL;
   tcb->kernel_tid = -1;
+  tcb->thread_state = RUNNING;
 
   // Try to find space for a new stack in the queue
   mutex_lock(&task.queue_mutex);

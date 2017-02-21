@@ -42,13 +42,14 @@ int thr_join(int tid, void **statusp) {
     return -1;
   }
 
+
   // The thread is still running
   if (tcb->thread_state == RUNNING) {
     tcb->thread_state = WAITING_ON;
     cond_wait(&tcb->cond_var_state, &tcb->mutex_state);
   }
-
   // When we get here the thread has exited and we can clean things up
+  tcb->thread_state = WAITING_ON;
 
   // We don't need the mutex anymore
   mutex_unlock(&tcb->mutex_state);

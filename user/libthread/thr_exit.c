@@ -3,10 +3,10 @@
  *  @author akanjani, lramire1
  */
 
-#include <stdlib.h>
 #include <global_state.h>
-#include <thr_internals.h>
+#include <stdlib.h>
 #include <syscall.h>
+#include <thr_internals.h>
 
 /** @brief Exit the thread with an exit status
  *
@@ -15,14 +15,14 @@
  *  @return Do not return
  */
 
-void thr_exit( void *status ) {
+void thr_exit(void *status) {
 
   // Get the thread's TCB
-  tcb_t* tcb = get_tcb();
+  tcb_t *tcb = get_tcb();
 
   // Should not happen
   if (tcb == NULL) {
-    //panic("thr_exit(): Thread's TCB does not exist !\n");
+    // panic("thr_exit(): Thread's TCB does not exist !\n");
   }
 
   // Set return status
@@ -32,7 +32,7 @@ void thr_exit( void *status ) {
 
   if (tcb->thread_state == WAITING_ON) {
     // Some other thread has called thr_join() on this thread
-      cond_signal(&tcb->cond_var_state);
+    cond_signal(&tcb->cond_var_state);
   } else {
     // Set the thread's state to EXITED
     tcb->thread_state = EXITED;

@@ -31,7 +31,7 @@ tcb_t *get_tcb() {
     unsigned int thr_stack =
         ((unsigned int)task.stack_highest_childs - esp) / size;
     tcb_t **tcb = (tcb_t **)((unsigned int)task.stack_highest_childs -
-                             thr_stack * size - PAGE_SIZE - 1);
+                             thr_stack * size - PAGE_SIZE - 4);
     return *tcb;
   }
 
