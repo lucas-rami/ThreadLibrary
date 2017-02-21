@@ -39,9 +39,11 @@ int thr_create(void *(*func)(void *), void *arg) {
     return -1;
   }
 
-  // Initialize the TCB's mutex, condition variable and spinlock
+  // Initialize the TCB's mutex and  condition variable
   if (cond_init(&tcb->cond_var_state) < 0 ||
-      mutex_init(&tcb->mutex_state) < 0) {
+      mutex_init(&tcb->mutex_state) < 0 ||
+      cond_init(&tcb->cond_var_kernel_tid) < 0 ||
+      mutex_init(&tcb->mutex_kernel_tid) < 0) {
     free(tcb);
     return -1;
   }
@@ -128,7 +130,15 @@ int thr_create(void *(*func)(void *), void *arg) {
   }
 
   // Update the child's TCB with its kernel issued TID
-  tcb->kernel_tid = child_tid;
+  mutex_lock(&tcb->mutex_kernel_tid);
+
+  // If the value has not been updated by some other thread, signal that
+  // we have updated it to everyone waiting
+  if (tcb->kernel_tid == -1) {
+    tcb->kernel_tid = child_tid;
+    cond_broadcast(&tcb->cond_var_kernel_tid);
+  }
+  mutex_unlock(&tcb->mutex_kernel_tid);
 
   return tcb->library_tid;
 }

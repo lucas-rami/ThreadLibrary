@@ -58,9 +58,11 @@ int thr_init(unsigned int size) {
   tcb->stack_high = task.stack_highest;
   tcb->thread_state = RUNNING;
 
-  // Initialize the TCB's mutex, condition variable and spinlock
+  // Initialize the TCB's mutex and  condition variable
   if (cond_init(&tcb->cond_var_state) < 0 ||
-      mutex_init(&tcb->mutex_state) < 0) {
+      mutex_init(&tcb->mutex_state) < 0 ||
+      cond_init(&tcb->cond_var_kernel_tid) < 0 ||
+      mutex_init(&tcb->mutex_kernel_tid) < 0) {
     free(tcb);
     return -1;
   }

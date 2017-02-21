@@ -26,8 +26,7 @@ typedef struct tcb {
   unsigned int *stack_high;
   // Thread's return status
   void* return_status;
-  // Thread's id (provided by the kernel)
-  int kernel_tid;
+
 
   /* library_tid, stack_low and stack_high do not need to be protected by a
    * lock since their value is defined before the thread is created.
@@ -42,11 +41,20 @@ typedef struct tcb {
 
   /*------------------------------*/
 
+  // Thread's id (provided by the kernel)
+  int kernel_tid;
+  // Condition variable for kernel_tid
+  cond_t cond_var_kernel_tid;
+  // Mutex for manipulation the kernel_tid field
+  mutex_t mutex_kernel_tid;
+
+  /*------------------------------*/
+
   // Threads state (either WAITING_ON, EXITED, or RUNNING)
   int thread_state;
   // Condition variable for thr_exit() and thr_join()
   cond_t cond_var_state;
-  // Mutex for manipulating the thread's state variable
+  // Mutex for manipulating the thread's state field
   mutex_t mutex_state;
 
 } tcb_t;
