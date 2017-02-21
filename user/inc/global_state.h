@@ -32,12 +32,7 @@ typedef struct tcb {
    * lock since their value is defined before the thread is created.
    *
    * return_status is written to only by the thread owning this TCB, so
-   * no lock is needed for it neither.
-   *
-   * kernel_tid may be written to by multiple threads. They will change the
-   * value for this field (initialized as -1 by thr_create()) at most once,
-   * and in the case that multiple threads change this field, they will replace
-   * it by the same value. Hence we do not need a lock to protect it. */
+   * no lock is needed for it neither. */
 
   /*------------------------------*/
 
