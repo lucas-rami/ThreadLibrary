@@ -28,17 +28,11 @@
  */
 static void thr_enqueue(mutex_t *mp, int thr_id) {
 
-  // Acquire the queue spinlock
-  spinlock_acquire(&mp->queue_lock);
-
-  // Release the mutex lock so that other threads may progress
-  spinlock_release(&mp->lock);
-
   // Insert the current thread into the waiting queue
   queue_insert_node(&mp->waiting_queue, (void *)thr_id);
 
-  // Release the queue spinlock
-  spinlock_release(&mp->queue_lock);
+  // Release the mutex lock so that other threads may progress
+  spinlock_release(&mp->lock);
 
   // Deschedule the current thread
   int dont_run = DONT_RUN;
@@ -60,17 +54,11 @@ static void thr_dequeue(mutex_t *mp) {
     // panic("ILLEGAL Operation! Trying to dequeue from empty queue\n");
   }
 
-  // Acquire the queue spinlock
-  spinlock_acquire(&mp->queue_lock);
-
   // Make the the list's head thread runnable
   int thr_id = (int)queue_delete_node(&mp->waiting_queue);
   while (make_runnable(thr_id) < 0) {
     continue;
   }
-
-  // Release the queue spinlock
-  spinlock_release(&mp->queue_lock);
 }
 
 /** @brief Initialize a mutex
@@ -95,7 +83,6 @@ int mutex_init(mutex_t *mp) {
   // Make sure we are not interrupted while initializing
   spinlock_acquire(&mp->lock);
 
-  spinlock_init(&mp->queue_lock);
   mp->mutex_state = FREE;
   mp->init = MUTEX_INITIALIZED;
 

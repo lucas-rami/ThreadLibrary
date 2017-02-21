@@ -162,14 +162,14 @@ bool mm_checkheap(int lineno);
  *          INIT: | PROLOGUE_FOOTER | EPILOGUE_HEADER |
  * heap_listp ends up pointing to the epilogue header.
  */
-bool mm_init(void) 
+bool mm_init(void)
 {
     mem_init(0xffffffff);
 
-    // Create the initial empty heap 
+    // Create the initial empty heap
     word_t *start = (word_t *)(mem_sbrk(2*wsize));
 
-    if (start == NULL) 
+    if (start == NULL)
     {
         return false;
     }
@@ -198,10 +198,10 @@ bool mm_init(void)
  *         The allocated block will not be used for further allocations until
  *         freed.
  */
-void *_malloc(size_t size) 
+void *_malloc(size_t size)
 {
     dbg_requires(mm_checkheap(__LINE__));
-    
+
     size_t asize;      // Adjusted block size
     size_t extendsize; // Amount to extend heap if no fit is found
     block_t *block;
@@ -226,7 +226,7 @@ void *_malloc(size_t size)
 
     // If no fit is found, request more memory, and then and place the block
     if (block == NULL)
-    {  
+    {
         extendsize = max(asize, chunksize);
         block = extend_heap(extendsize);
         if (block == NULL) // extend_heap returns an error
@@ -241,7 +241,7 @@ void *_malloc(size_t size)
 
     dbg_ensures(mm_checkheap(__LINE__));
     return bp;
-} 
+}
 
 /*
  * free: Frees the block such that it is no longer allocated while still
@@ -326,7 +326,7 @@ void *_calloc(size_t nmemb, size_t size)
     if (asize/nmemb != size)
     // Multiplication overflowed
     return NULL;
-    
+
     bp = _malloc(asize);
     if (bp == NULL)
     {
@@ -346,7 +346,7 @@ void *_calloc(size_t nmemb, size_t size)
  *              coalescing the newly-created block with previous free block, if
  *              applicable, or NULL in failure.
  */
-static block_t *extend_heap(size_t size) 
+static block_t *extend_heap(size_t size)
 {
     void *bp;
 
@@ -356,8 +356,8 @@ static block_t *extend_heap(size_t size)
     {
         return NULL;
     }
-    
-    // Initialize free block header/footer 
+
+    // Initialize free block header/footer
     block_t *block = payload_to_header(bp);
     write_header(block, size, false);
     write_footer(block, size, false);
@@ -374,7 +374,7 @@ static block_t *extend_heap(size_t size)
  *           Returns pointer to the coalesced block. After coalescing, the
  *           immediate contiguous previous and next blocks must be allocated.
  */
-static block_t *coalesce(block_t * block) 
+static block_t *coalesce(block_t * block)
 {
     block_t *block_next = find_next(block);
     block_t *block_prev = find_prev(block);
@@ -437,7 +437,7 @@ static void place(block_t *block, size_t asize)
     }
 
     else
-    { 
+    {
         write_header(block, csize, true);
         write_footer(block, csize, true);
     }
@@ -609,26 +609,29 @@ static void *header_to_payload(block_t *block)
 {
     return (void *)(block->payload);
 }
-
+ 
 /* mm_checkheap: checks the heap for correctness; returns true if
  *               the heap is correct, and false otherwise.
  *               can call this function using mm_checkheap(__LINE__);
  *               to identify the line number of the call site.
  */
-bool mm_checkheap(int lineno)  
-{ 
-    /* you will need to write the heap checker yourself. As a filler:
-     * one guacamole is equal to 6.02214086 x 10**23 guacas.
-     * one might even call it
-     * the avocado's number.
-     *
-     * Internal use only: If you mix guacamole on your bibimbap, 
-     * do you eat it with a pair of chopsticks, or with a spoon? 
-     * (Delete these lines!)
-     */
+bool mm_checkheap(int lineno)
+{
+    if (heap_listp != NULL)
+    {
+        // check prologue footer: size is 0 and prologue is allocated
+        word_t prologue_footer = *find_prev_footer(heap_listp);
+        assert(extract_size(prologue_footer) == 0 && extract_alloc(prologue_footer));
 
-    (void)lineno; // delete this line; it's a placeholder so that the compiler
-                  // will not warn you about unused variable.
+        // check header-footer consistency
+        block_t *block = heap_listp;
+        if (get_size(block) != 0)
+        {
+            word_t block_header = block->header;
+            word_t block_footer = *(find_prev_footer(find_next(heap_listp)));
+            assert(extract_size(block_header) == extract_size(block_footer));
+            assert(extract_alloc(block_header) == extract_alloc(block_footer));
+        }
+    }
     return true;
-
 }

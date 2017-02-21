@@ -13,7 +13,6 @@ typedef struct mutex {
   int init;
   int mutex_state;
   spinlock_t lock;
-  spinlock_t queue_lock;
   generic_queue_t waiting_queue;
 } mutex_t;
 

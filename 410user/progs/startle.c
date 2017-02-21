@@ -11,6 +11,7 @@
 #include <syscall.h>
 #include <simics.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "410_tests.h"
 #include <report.h>
 
@@ -20,37 +21,47 @@ void *child(void *param);
 
 #define STACK_SIZE 3072
 
-#define NTHREADS 30
+#define DEFAULT_NTHREADS 30
 #define SOMETIMES 4
 
-int ktids[NTHREADS];
+int *ktids;
 
-/** @brief Create NTHREADS threads, and test that they all run. */
+/** @brief Create a bunch of threads, and test that they all run. */
 int
 main(int argc, char *argv[])
 {
   int t, done = 0;
+  int nthreads = DEFAULT_NTHREADS;
+  if (argc > 1) nthreads = atoi(argv[1]);
 
-  thr_init(STACK_SIZE);
   report_start(START_CMPLT);
+  if (thr_init(STACK_SIZE) < 0 || !(ktids = calloc(nthreads, sizeof (ktids[0])))) {
+    printf("Initialization failure\n");
+	report_end(END_FAIL);
+    return -1;
+  }
 
-  for (t = 0; t < NTHREADS; ++t) {
+  for (t = 0; t < nthreads; ++t) {
     (void) thr_create(child, (void *)t);
-    if (t % SOMETIMES == 0)
+    if (t % SOMETIMES == 0) {
       yield(-1);
+    }
   }
 
   while (!done) {
     int nregistered, slot;
 
-    for (nregistered = 0, slot = 0; slot < NTHREADS; ++slot)
-      if (ktids[slot] != 0)
+    for (nregistered = 0, slot = 0; slot < nthreads; ++slot) {
+      if (ktids[slot] != 0) {
         ++nregistered;
+      }
+    }
 
-    if (nregistered == NTHREADS)
+    if (nregistered == nthreads) {
       done = 1;
-    else
+    } else {
       sleep(1);
+    }
   }
 
   printf("Success!\n"); lprintf("Success!\n");
