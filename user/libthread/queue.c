@@ -87,6 +87,7 @@ int queue_insert_node( generic_queue_t *list, void *value ) {
 
   // Add the new node to the end of the list
   (*tail)->next = new_node;
+  *tail = new_node;
 
   return 0;
 }
