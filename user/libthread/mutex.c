@@ -7,6 +7,8 @@
 #include <mutex.h>
 #include <stddef.h>
 #include <syscall.h>
+#include <thread.h>
+#include <thr_internals.h>
 
 #define HELD 0
 #define FREE 1
@@ -168,7 +170,7 @@ void mutex_lock(mutex_t *mp) {
     spinlock_release(&mp->lock);
   } else {
     // If some other thread is in the critical section, enqueue the current one
-    thr_enqueue(mp, gettid());
+    thr_enqueue(mp, thr_get_kernel_id(thr_getid()));
     // The thread returning here owns the mutex and may proceed in the critical
     // section
   }

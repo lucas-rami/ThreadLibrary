@@ -9,10 +9,10 @@
 
 #include <cond_type.h>
 #include <cond.h>
-#include <queue.h>
-#include <stddef.h>
 #include <syscall.h>
 #include <stdio.h>
+#include <thread.h>
+#include <thr_internals.h>
 
 #define CVAR_INITIALIZED 1
 #define CVAR_UNINITIALIZED 0
@@ -113,7 +113,7 @@ void cond_wait( cond_t *cv, mutex_t *mp ) {
   spinlock_acquire( &cv->spinlock );
 
   // Add this thread to the waiting queue of this condition variable
-  queue_insert_node( &cv->waiting_queue, (void*)gettid() );
+  queue_insert_node( &cv->waiting_queue, (void*) thr_get_kernel_id(thr_getid()) );
 
   // Release the mutex so that other threads can run now
   /* TODO; Could we put mutex_unlock above the call to queue_insert_node() ?
@@ -155,11 +155,6 @@ void cond_signal( cond_t *cv ) {
     // waiting queue is not empty
     void *tid = queue_delete_node( &cv->waiting_queue );
 
-    if ( !tid ) {
-      // Queue is empty or something went wrong
-      printf( "Error while deleting from the waiting queue\n" );
-    }
-
     // Start the thread which was just dequed from the waiting queue
     while (make_runnable( ( int )tid ) < 0) {
       continue;
@@ -193,11 +188,6 @@ void cond_broadcast( cond_t *cv ) {
   while ( cv->waiting_queue.head != NULL ) {
     // waiting queue is not elockty
     void *tid = queue_delete_node( &cv->waiting_queue );
-
-    if ( !tid ) {
-      // Something went wrong
-      printf( "Error while deleting from the waiting queue\n" );
-    }
 
     // Start the thread which was just dequed
     make_runnable( ( int )tid );
