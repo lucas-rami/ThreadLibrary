@@ -19,6 +19,6 @@ tcb_t* get_tcb(void);
 int find_tcb(void* tcb, void* tid);
 unsigned int hash_function_tcb(void* tcb, unsigned int nb_buckets);
 
-int thr_get_kernel_id(void);
+int thr_get_kernel_id(int library_tid);
 
 #endif /* THR_INTERNALS_H */
