@@ -11,6 +11,7 @@
 #include <mutex.h>
 #include <cond.h>
 #include <assert.h>
+#include <rwlock_helper.h>
 
 #define TRUE 0
 #define FALSE 1
