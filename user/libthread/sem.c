@@ -141,8 +141,7 @@ void sem_signal( sem_t *sem ) {
   // Increment the number of resources available
   sem->available_resources++;
 
-  // TODO: Should this be <= instead?
-  if ( sem->available_resources < 0 ) {
+  if ( sem->available_resources <= 0 ) {
     // There is at least one thread waiting for a resource
 
     // Increment the number of threads woken up till now
