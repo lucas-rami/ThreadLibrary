@@ -8,6 +8,7 @@
 
 #include <spinlock.h>
 #include <atomic_ops.h>
+#include <syscall.h>
 
 #define SPINLOCK_UNLOCKED 0
 #define SPINLOCK_LOCKED 1
@@ -42,7 +43,9 @@ int spinlock_init( spinlock_t *lock ) {
  */
 void spinlock_acquire( spinlock_t *lock ) {
   // Try to atomically get the lock and loop until we don't
-  while( atomic_exchange( lock, SPINLOCK_LOCKED ) == SPINLOCK_LOCKED );
+  while( atomic_exchange( lock, SPINLOCK_LOCKED ) == SPINLOCK_LOCKED ) {
+    yield( -1 );
+  }
 }
 
 /** @brief Releases a spinlock. Atomically changes the state to UNLOCKED
