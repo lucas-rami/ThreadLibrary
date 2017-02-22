@@ -11,17 +11,12 @@ typedef struct generic_node {
   struct generic_node *next;
 } generic_node_t;
 
-typedef struct generic_double_node {
-  void *value;
-  struct generic_double_node *next, *prev;
-} generic_double_node_t;
-
 typedef struct queue {
   generic_node_t *head, *tail;
 } generic_queue_t;
 
 typedef struct linked_list {
-  generic_double_node_t *head, *tail;
+  generic_node_t *head, *tail;
   int (*find)(void* elem, void* value);
 } generic_linked_list_t;
 
