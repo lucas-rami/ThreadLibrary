@@ -124,7 +124,10 @@ int thr_create(void *(*func)(void *), void *arg) {
     mutex_unlock(&task.queue_mutex);
 
     // Free child's TCB and remove it from hash table
+    mutex_lock(&task.tcbs_mutex);
     hash_table_remove_element(&task.tcbs, tcb);
+    mutex_unlock(&task.tcbs_mutex);
+
     free(tcb);
 
     return -1;
