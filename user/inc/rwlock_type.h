@@ -1,5 +1,6 @@
 /** @file rwlock_type.h
  *  @brief This file defines the type for reader/writer locks.
+ *  @author akanjani, lramire1
  */
 
 #ifndef _RWLOCK_TYPE_H
