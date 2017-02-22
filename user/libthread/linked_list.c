@@ -50,7 +50,7 @@ int linked_list_insert_node(generic_linked_list_t *list, void *value) {
   }
 
   // Allocate a new node
-  generic_double_node_t *new_node = malloc(sizeof(generic_double_node_t));
+  generic_node_t *new_node = malloc(sizeof(generic_node_t));
   if (new_node == NULL) {
     return -1;
   }
@@ -59,12 +59,10 @@ int linked_list_insert_node(generic_linked_list_t *list, void *value) {
 
   if (list->head == NULL && list->tail == NULL) {
     // Linked list is empty
-    new_node->prev = NULL;
     list->head = new_node;
     list->tail = new_node;
   } else {
     // Linked list is non-empty
-    new_node->prev = list->tail;
     list->tail->next = new_node;
     list->tail = new_node;
   }
@@ -93,32 +91,31 @@ void *linked_list_delete_node(generic_linked_list_t *list, void *value) {
   }
 
   // Iterator on the list's elements
-  generic_double_node_t *node = list->head;
+  generic_node_t *node = list->head, *prev = NULL;
 
   // Loop over the list
   while (node != NULL) {
     if (list->find(node->value, value)) {
-      if (node->prev == NULL && node->next == NULL) {
+      if (prev == NULL && node->next == NULL) {
         // Node is only element in linked list
         list->head = NULL;
         list->tail = NULL;
-      } else if (node->prev == NULL) {
+      } else if (prev == NULL) {
         // Node is list's head
         list->head = node->next;
-        list->head->prev = NULL;
       } else if (node->next == NULL) {
         // Node is list's tail
-        list->tail = node->prev;
+        list->tail = prev;
         list->tail->next = NULL;
       } else {
         // Node is between other nodes
-        node->prev->next = node->next;
-        node->next->prev = node->prev;
+        prev->next = node->next;
       }
       void *ret = node->value;
       free(node);
       return ret;
     }
+    prev = node;
     node = node->next;
   }
   return NULL;
@@ -144,7 +141,7 @@ void *linked_list_get_node(const generic_linked_list_t *list, void *value) {
   }
 
   // Iterator on the list's elements
-  generic_double_node_t *iterator = list->head;
+  generic_node_t *iterator = list->head;
 
   // Loop over the list
   while (iterator != NULL) {
