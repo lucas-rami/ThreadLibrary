@@ -86,6 +86,7 @@ int queue_insert_node( generic_queue_t *list, void *value ) {
     // Invalid double pointer
 
     mutex_unlock(&list->mp);
+    free(new_node);
     return -1;
   }
 
