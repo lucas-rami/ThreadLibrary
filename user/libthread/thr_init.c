@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <syscall.h>
 #include <thread.h>
+#include <cond.h>
 
 #define NB_BUCKETS_TCB 16
 
@@ -40,7 +41,7 @@ int thr_init(unsigned int size) {
 
   // Initialize spinlock/mutexes
   if (spinlock_init(&task.state_lock) < 0 ||
-      mutex_init(&task.queue_mutex) < 0 || mutex_init(&task.tcbs_mutex) < 0) {
+      mutex_init(&task.queue_mutex) < 0) {
     return -1;
   }
 

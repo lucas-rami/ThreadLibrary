@@ -10,6 +10,7 @@
 #include <syscall.h>
 #include <thr_internals.h>
 #include <thread.h>
+#include <cond.h>
 
 /** @brief Create a new thread to run func(arg)
  *
@@ -92,9 +93,7 @@ int thr_create(void *(*func)(void *), void *arg) {
   }
 
   // Put the child's TCB in the hash table
-  mutex_lock(&task.tcbs_mutex);
   hash_table_add_element(&task.tcbs, tcb);
-  mutex_unlock(&task.tcbs_mutex);
 
   // Initialize the child's stack (at lower addresses than the exception stack)
   unsigned int *child_esp =
@@ -124,9 +123,7 @@ int thr_create(void *(*func)(void *), void *arg) {
     mutex_unlock(&task.queue_mutex);
 
     // Free child's TCB and remove it from hash table
-    mutex_lock(&task.tcbs_mutex);
     hash_table_remove_element(&task.tcbs, tcb);
-    mutex_unlock(&task.tcbs_mutex);
 
     free(tcb);
 

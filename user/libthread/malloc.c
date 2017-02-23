@@ -58,7 +58,7 @@ void free(void *__buf) {
   if (initialized == FALSE && atomic_exchange(&initialized, TRUE) == FALSE) {
     mutex_init(&alloc_mutex);
   }
-  
+
   mutex_lock(&alloc_mutex);
   _free(__buf);
   mutex_unlock(&alloc_mutex);

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <syscall.h>
 #include <thr_internals.h>
+#include <cond.h>
 
 /** @brief Cleans up after a thread, optionnaly returning the status information
  *  provided by the thread at the time of exit
@@ -27,10 +28,7 @@
 int thr_join(int tid, void **statusp) {
 
   // Get the TCB of the thread we want to join on
-  mutex_lock(&task.tcbs_mutex);
   tcb_t *tcb = hash_table_get_element(&task.tcbs, &tid);
-  mutex_unlock(&task.tcbs_mutex);
-
 
   // The thread already exited and was joined on or the tid is invalid
   if (tcb == NULL) {
@@ -63,9 +61,7 @@ int thr_join(int tid, void **statusp) {
   }
 
   // Remove TCB from hash table
-  mutex_lock(&task.tcbs_mutex);
   hash_table_remove_element(&task.tcbs, &tid);
-  mutex_unlock(&task.tcbs_mutex);
 
   // Deallocate stack pages
   if (remove_pages(tcb->stack_low) < 0) {
