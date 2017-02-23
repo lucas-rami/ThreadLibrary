@@ -40,8 +40,7 @@ int thr_init(unsigned int size) {
   }
 
   // Initialize mutexes
-  if (mutex_init(&task.state_lock) < 0 ||
-      mutex_init(&task.queue_mutex) < 0) {
+  if (mutex_init(&task.state_lock) < 0) {
     return -1;
   }
 

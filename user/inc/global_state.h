@@ -78,8 +78,6 @@ typedef struct task {
 
   // Queue for free stack spaces
   generic_queue_t stack_queue;
-  // Mutex for queue access
-  mutex_t queue_mutex;
 
   /*------------------------------*/
 

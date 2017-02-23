@@ -8,10 +8,14 @@
 #define _QUEUE_H_
 
 #include <generic_node.h>
+#include <mutex_type.h>
 
-typedef struct queue { generic_node_t *head, *tail; } generic_queue_t;
+typedef struct queue {
+  generic_node_t *head, *tail;
+  mutex_t mp;
+} generic_queue_t;
 
-int queue_init(generic_queue_t *queue);
+int queue_init(generic_queue_t *list);
 int queue_insert_node(generic_queue_t *list, void *value);
 void *queue_delete_node(generic_queue_t *list);
 

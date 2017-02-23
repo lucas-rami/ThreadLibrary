@@ -10,6 +10,7 @@
 
 #include <queue.h>
 #include <stdlib.h>
+#include <mutex.h>
 
 /** @brief Makes a generic_node_t type node to be added in the queue
  *
@@ -37,18 +38,23 @@ static generic_node_t *make_node( void *value ) {
 
 /** @brief Initialize the queue
  *
- *  @param queue The queue to be initialized
+ *  @param list The queue to be initialized
  *
  *  @return 0 on success, a negative error code on failure
  */
-int queue_init(generic_queue_t *queue) {
+int queue_init(generic_queue_t *list) {
 
   // Check validity of argument
-  if (queue == NULL) {
+  if (list == NULL) {
     return -1;
   }
-  queue->head = NULL;
-  queue->tail = NULL;
+  list->head = NULL;
+  list->tail = NULL;
+
+  if (mutex_init(&list->mp) < 0) {
+    return -1;
+  }
+
   return 0;
 }
 
@@ -62,14 +68,6 @@ int queue_init(generic_queue_t *queue) {
  */
 int queue_insert_node( generic_queue_t *list, void *value ) {
 
-  generic_node_t **head = &list->head;
-  generic_node_t **tail = &list->tail;
-
-  if ( !head || !tail ) {
-    // Invalid double pointer
-    return -1;
-  }
-
   // Make a new node
   generic_node_t *new_node = make_node( value );
 
@@ -78,16 +76,34 @@ int queue_insert_node( generic_queue_t *list, void *value ) {
     return -1;
   }
 
+  // Acquire mutex
+  mutex_lock(&list->mp);
+
+  generic_node_t **head = &list->head;
+  generic_node_t **tail = &list->tail;
+
+  if ( !head || !tail ) {
+    // Invalid double pointer
+
+    mutex_unlock(&list->mp);
+    return -1;
+  }
+
   if ( *tail == NULL && *head == NULL ) {
     // head is NULL. This is the first element of the list
     *tail = new_node;
     *head = new_node;
+
+    mutex_unlock(&list->mp);
     return 0;
   }
 
   // Add the new node to the end of the list
   (*tail)->next = new_node;
   *tail = new_node;
+
+  // Release mutex
+  mutex_unlock(&list->mp);
 
   return 0;
 }
@@ -102,21 +118,27 @@ int queue_insert_node( generic_queue_t *list, void *value ) {
  */
 void *queue_delete_node( generic_queue_t *list ) {
 
+  // Acquire mutex
+  mutex_lock(&list->mp);
+
   generic_node_t **head = &list->head;
   generic_node_t **tail = &list->tail;
 
   if ( !head || !tail ) {
     // Invalid double pointer
+    mutex_unlock(&list->mp);
     return NULL;
   }
 
   if ( *head == NULL || *tail == NULL ) {
     // list is empty or the tail/head pointer is messed up
+    mutex_unlock(&list->mp);
     return NULL;
   }
 
   if ( *head == *tail ) {
     // The only element in the list
+    mutex_unlock(&list->mp);
     *tail = NULL;
   }
 
@@ -126,6 +148,9 @@ void *queue_delete_node( generic_queue_t *list ) {
 
   // Update head
   *head = ( *head )->next;
+
+  // Release mutex
+  mutex_unlock(&list->mp);
 
   // Free the space for deleted node
   free( tmp );

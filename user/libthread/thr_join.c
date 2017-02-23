@@ -73,9 +73,7 @@ int thr_join(int tid, void **statusp) {
   if ((unsigned int)tcb->stack_low !=
       (unsigned int)task.stack_highest_childs + PAGE_SIZE) {
 
-    mutex_lock(&task.queue_mutex);
     queue_insert_node(&task.stack_queue, tcb->stack_high);
-    mutex_unlock(&task.queue_mutex);
   }
 
   // Free the TCB data structure
