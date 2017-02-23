@@ -76,7 +76,6 @@ int thr_init(unsigned int size) {
 
   // Finish to initialize the task's global state
   task.stack_size = size;
-  task.nb_threads = 1;
   task.tid = 1;
   task.stack_highest_childs = task.stack_lowest - PAGE_SIZE;
   task.root_tcb = tcb;

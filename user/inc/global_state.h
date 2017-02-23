@@ -69,9 +69,6 @@ typedef struct task {
 
   // Lowest address of task's threads stacks (initialized by autostack())
   unsigned int *stack_lowest;
-  // Number of threads running in the task
-  // TODO: Not sure we really need this...
-  unsigned int nb_threads;
   // Thread library tids
   unsigned int tid;
   // Spinlock for task's state access
