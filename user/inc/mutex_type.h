@@ -6,15 +6,8 @@
 #ifndef _MUTEX_TYPE_H
 #define _MUTEX_TYPE_H
 
-#include <spinlock.h>
-#include <queue.h>
-#include <generic_node.h>
-
 typedef struct mutex {
-  int init;
-  int mutex_state;
-  spinlock_t lock;
-  generic_queue_t waiting_queue;
+  int prev, next_ticket, init;
 } mutex_t;
 
 #endif /* _MUTEX_TYPE_H */

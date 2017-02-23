@@ -39,8 +39,8 @@ int thr_init(unsigned int size) {
     return -1;
   }
 
-  // Initialize spinlock/mutexes
-  if (spinlock_init(&task.state_lock) < 0 ||
+  // Initialize mutexes
+  if (mutex_init(&task.state_lock) < 0 ||
       mutex_init(&task.queue_mutex) < 0) {
     return -1;
   }

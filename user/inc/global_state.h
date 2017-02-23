@@ -7,7 +7,7 @@
 #ifndef _GLOBAL_STATE_H_
 #define _GLOBAL_STATE_H_
 
-#include <mutex_type.h>
+#include <mutex.h>
 #include <cond_type.h>
 #include <syscall.h>
 #include <hash_table.h>
@@ -75,7 +75,7 @@ typedef struct task {
   // Thread library tids
   unsigned int tid;
   // Spinlock for task's state access
-  spinlock_t state_lock;
+  mutex_t state_lock;
 
   /*------------------------------*/
 

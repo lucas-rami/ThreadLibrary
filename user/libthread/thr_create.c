@@ -59,7 +59,7 @@ int thr_create(void *(*func)(void *), void *arg) {
   mutex_unlock(&task.queue_mutex);
 
   // Define child_stack_low/high and update global state if necessary
-  spinlock_acquire(&task.state_lock);
+  mutex_lock(&task.state_lock);
   if (child_stack_high == NULL) {
     child_stack_high = task.stack_lowest - PAGE_SIZE;
     // Need space for : 1 stack + 1 page (exception stack) + 1 page (guardpage)
@@ -71,7 +71,7 @@ int thr_create(void *(*func)(void *), void *arg) {
   tcb->library_tid = task.tid;
   ++task.tid;
 
-  spinlock_release(&task.state_lock);
+  mutex_unlock(&task.state_lock);
 
   // Keep track of stack boundaries in child's TCB
   tcb->stack_low = child_stack_low;

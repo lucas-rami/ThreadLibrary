@@ -12,7 +12,8 @@
 #include <stdio.h>
 #include <thread.h>
 #include <thr_internals.h>
-
+#include <assert.h>
+#include <mutex.h>
 
 #define CVAR_INITIALIZED 1
 #define CVAR_UNINITIALIZED 0
@@ -35,9 +36,9 @@ int cond_init( cond_t *cv ) {
     return -1;
   }
 
-  spinlock_init( &( cv->spinlock ) );
+  mutex_init( &cv->lock );
 
-  spinlock_acquire( &( cv->spinlock ) );
+  mutex_lock( &cv->lock );
 
   cv->init = CVAR_INITIALIZED;
 
@@ -45,8 +46,9 @@ int cond_init( cond_t *cv ) {
   cv->waiting_queue.head = NULL;
   cv->waiting_queue.tail = NULL;
 
-  // Initialize the spinlock of the cvar
-  spinlock_release( &( cv->spinlock ) );
+  // Initialize the lock of the cvar
+  mutex_unlock( &cv->lock );
+
   return 0;
 }
 
@@ -63,26 +65,20 @@ int cond_init( cond_t *cv ) {
  *  @return void
  */
 void cond_destroy( cond_t *cv ) {
-  if ( !cv ) {
-    // panic( "Invalid argument to cond_destroy\n" );
-  }
 
-  spinlock_acquire( &cv->spinlock );
+  assert( cv );
 
-  if ( cv->init == CVAR_UNINITIALIZED ) {
-    // panic( "ILLEGAL Operation! Cannot destroy the condition variable. Reason:"
-    //  "It is not initialized.\n" );
-  }
+  mutex_lock( &cv->lock );
 
-  if ( cv->waiting_queue.head != NULL ) {
-    // Shouldnt happen
-    // panic( "ILLEGAL Operation! Cannot destroy the condition variable. Reason:"
-    //  "There are threads blocked waiting for this condition variable.\n" );
-  }
+  assert( cv->init == CVAR_INITIALIZED );
+
+  assert ( cv->waiting_queue.head == NULL );
 
   cv->init = CVAR_UNINITIALIZED;
 
-  spinlock_release( &cv->spinlock );
+  mutex_unlock( &cv->lock );
+
+  mutex_destroy( &cv->lock );
 }
 
 /** @brief Waits for a condition to be true associated with cv
@@ -100,17 +96,12 @@ void cond_destroy( cond_t *cv ) {
  */
 void cond_wait( cond_t *cv, mutex_t *mp ) {
 
-  if ( !cv || !mp ) {
-    // panic( "Invalid argument to cond_wait\n" );
-  }
+  assert ( cv && mp );
 
-  if ( cv->init == CVAR_UNINITIALIZED ) {
-    // panic( "ILLEGAL Operation! Cannot wait on this condition variable. Reason:"
-    //  "It is not initialized.\n" );
-  }
+  assert ( cv->init == CVAR_INITIALIZED );
+
   // Make the operation atomic
-  // TODO: Do we really need this lock
-  spinlock_acquire( &cv->spinlock );
+  mutex_lock( &cv->lock );
 
   // Add this thread to the waiting queue of this condition variable
   queue_insert_node( &cv->waiting_queue, (void*) thr_get_kernel_id(thr_getid()) );
@@ -120,7 +111,7 @@ void cond_wait( cond_t *cv, mutex_t *mp ) {
    * We don't want to hold the mutex for too long... */
   mutex_unlock( mp );
 
-  spinlock_release( &cv->spinlock );
+  mutex_unlock( &cv->lock );
 
   // Tell the scheduler to not run this thread
   int dont_run = DONT_RUN;
@@ -140,16 +131,12 @@ void cond_wait( cond_t *cv, mutex_t *mp ) {
  */
 void cond_signal( cond_t *cv ) {
 
-  if ( !cv ) {
-    // panic( "Invalid argument to cond_signal\n" );
-  }
+  assert ( cv );
 
-  if ( cv->init == CVAR_UNINITIALIZED ) {
-    // panic( "ILLEGAL Operation! Cannot signal this condition variable. Reason:"
-    //  "It is not initialized.\n" );
-  }
+  assert ( cv->init == CVAR_INITIALIZED );
+
   // Make the whole operation atomic
-  spinlock_acquire( &cv->spinlock );
+  mutex_lock( &cv->lock );
 
   if ( cv->waiting_queue.head != NULL ) {
     // waiting queue is not empty
@@ -161,7 +148,7 @@ void cond_signal( cond_t *cv ) {
     }
   }
 
-  spinlock_release( &cv->spinlock );
+  mutex_unlock( &cv->lock );
 }
 
 /** @brief Wakes up all threads waiting on the condition variable pointed to
@@ -173,16 +160,12 @@ void cond_signal( cond_t *cv ) {
  */
 void cond_broadcast( cond_t *cv ) {
 
-  if ( !cv ) {
-    // panic( "Invalid argument to cond_broadcast\n" );
-  }
+  assert ( cv );
 
-  if ( cv->init == CVAR_UNINITIALIZED ) {
-    // panic( "ILLEGAL Operation! Cannot broadcast this condition variable."
-    //  " Reason: It is not initialized.\n" );
-  }
+  assert ( cv->init == CVAR_INITIALIZED );
+
   // Make the whole operation atomic
-  spinlock_acquire( &cv->spinlock );
+  mutex_lock( &cv->lock );
 
   // Loop through the whole waiting queue
   while ( cv->waiting_queue.head != NULL ) {
@@ -193,5 +176,5 @@ void cond_broadcast( cond_t *cv ) {
     make_runnable( ( int )tid );
   }
 
-  spinlock_release( &cv->spinlock );
+  mutex_unlock( &cv->lock );
 }

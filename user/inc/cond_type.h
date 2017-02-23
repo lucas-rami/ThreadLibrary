@@ -7,12 +7,12 @@
 #define _COND_TYPE_H
 
 #include <queue.h>
-#include <spinlock.h>
+#include <mutex_type.h>
 
 typedef struct cond {
   int init;
   generic_queue_t waiting_queue;
-  spinlock_t spinlock;
+  mutex_t lock;
 } cond_t;
 
 #endif /* _COND_TYPE_H */
