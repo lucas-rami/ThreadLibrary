@@ -138,7 +138,6 @@ void *queue_delete_node( generic_queue_t *list ) {
 
   if ( *head == *tail ) {
     // The only element in the list
-    mutex_unlock(&list->mp);
     *tail = NULL;
   }
 
