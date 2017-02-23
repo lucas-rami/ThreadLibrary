@@ -30,6 +30,11 @@ int thr_init(unsigned int size) {
     return -1;
   }
 
+  int mod = size % PAGE_SIZE;
+  if (mod != 0) {
+    size += (PAGE_SIZE - mod);
+  }
+
   // Initialize the task's global state
 
   // Initialize data structures
@@ -76,7 +81,7 @@ int thr_init(unsigned int size) {
   // Finish to initialize the task's global state
   task.stack_size = size;
   task.tid = 1;
-  task.stack_highest_childs = task.stack_lowest - PAGE_SIZE;
+  task.stack_highest_childs = (unsigned int*) ((unsigned int) task.stack_lowest - PAGE_SIZE);
   task.root_tcb = tcb;
 
   // Register new exception handler (no automatic stack growth)

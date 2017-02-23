@@ -11,6 +11,7 @@
 #include <thr_internals.h>
 #include <thread.h>
 #include <cond.h>
+#include <simics.h>
 
 /** @brief Create a new thread to run func(arg)
  *
@@ -59,11 +60,11 @@ int thr_create(void *(*func)(void *), void *arg) {
   // Define child_stack_low/high and update global state if necessary
   mutex_lock(&task.state_lock);
   if (child_stack_high == NULL) {
-    child_stack_high = task.stack_lowest - PAGE_SIZE;
+    child_stack_high = (unsigned int *) ((unsigned int) task.stack_lowest - PAGE_SIZE);
     // Need space for : 1 stack + 1 page (exception stack) + 1 page (guardpage)
-    task.stack_lowest -= (task.stack_size + 2 * PAGE_SIZE);
+    task.stack_lowest = (unsigned int *)( (unsigned int) task.stack_lowest - (task.stack_size + 2 * PAGE_SIZE));
   }
-  child_stack_low = child_stack_high - task.stack_size - PAGE_SIZE;
+  child_stack_low = (unsigned int *) ((unsigned int)child_stack_high - task.stack_size - PAGE_SIZE);
 
   // Give the child thread a library tid
   tcb->library_tid = task.tid;

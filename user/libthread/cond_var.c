@@ -87,7 +87,7 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
   assert(cv->init == CVAR_INITIALIZED);
 
   // Add this thread to the waiting queue of this condition variable
-  queue_insert_node(&cv->waiting_queue, (void *)thr_get_kernel_id(thr_getid()));
+  queue_insert_node(&cv->waiting_queue, (void *)thr_get_my_kernel_id());
 
   // Release the mutex so that other threads can run now
   mutex_unlock(mp);

@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <thr_internals.h>
 #include <cond.h>
+#include <assert.h>
 
 /** @brief Returns the library level thread id of the current thread
  *
@@ -17,10 +18,7 @@
 int thr_getid() {
   tcb_t *tcb = get_tcb();
 
-  // Should not happen
-  if (tcb == NULL) {
-    // panic("thr_getid: TCB does not exists !\n");
-  }
+  assert(tcb != NULL);
 
   return tcb->library_tid;
 }
@@ -39,10 +37,7 @@ int thr_get_kernel_id(int library_tid) {
 
   tcb_t *tcb = hash_table_get_element(&task.tcbs, &library_tid);
 
-  // The requested thread does not exist
-  if (tcb == NULL) {
-    return -1;
-  }
+  assert(tcb != NULL);
 
   int kernel_tid;
 
@@ -57,4 +52,35 @@ int thr_get_kernel_id(int library_tid) {
   mutex_unlock(&tcb->mutex_kernel_tid);
 
   return kernel_tid;
+}
+
+/** @brief Allows a thread to know its own kernel issued tid
+ *
+ *  If the kernel issued tid is unknwon at the time of check, then a gettid()
+ *  system call is made to collect it. All the other threads (if any)
+ *  waiting for the value of the kernel id of this thread are woken up after.
+ *  If the kernel tid is already known, then the funtion returns rapidly.
+ *
+ *  @return The kernel level id of the calling thread
+ */
+int thr_get_my_kernel_id() {
+
+  // Get TCB of current thread
+  tcb_t* tcb = get_tcb();
+
+  assert(tcb != NULL);
+
+  mutex_lock(&tcb->mutex_kernel_tid);
+
+  if (tcb->kernel_tid == -1) {
+    mutex_unlock(&tcb->mutex_kernel_tid);
+    // The kernel tid is still unknown, get it using gettid()
+    tcb->kernel_tid = gettid();
+    cond_broadcast(&tcb->cond_var_kernel_tid);
+  } else {
+    // We already know what the kernel issued tid is
+    mutex_unlock(&tcb->mutex_kernel_tid);
+  }
+
+  return tcb->kernel_tid;
 }
