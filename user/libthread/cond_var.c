@@ -7,13 +7,13 @@
  *  @author akanjani, lramire1
  */
 
-#include <cond.h>
-#include <syscall.h>
-#include <stdio.h>
-#include <thread.h>
-#include <thr_internals.h>
 #include <assert.h>
+#include <cond.h>
 #include <mutex.h>
+#include <stdio.h>
+#include <syscall.h>
+#include <thr_internals.h>
+#include <thread.h>
 
 #define CVAR_INITIALIZED 1
 #define CVAR_UNINITIALIZED 0
@@ -30,24 +30,15 @@
  *
  *  @return Zero on success, a negative number on error
  */
-int cond_init( cond_t *cv ) {
+int cond_init(cond_t *cv) {
 
-  if ( !cv ) {
+  if (!cv) {
     return -1;
   }
 
-  mutex_init( &cv->lock );
-
-  mutex_lock( &cv->lock );
-
   cv->init = CVAR_INITIALIZED;
 
-  // Initialize the head and tail pointers in the waiting queue of the cvar
-  cv->waiting_queue.head = NULL;
-  cv->waiting_queue.tail = NULL;
-
-  // Initialize the lock of the cvar
-  mutex_unlock( &cv->lock );
+  queue_init(&cv->waiting_queue);
 
   return 0;
 }
@@ -64,21 +55,16 @@ int cond_init( cond_t *cv ) {
  *
  *  @return void
  */
-void cond_destroy( cond_t *cv ) {
+void cond_destroy(cond_t *cv) {
 
-  assert( cv );
+  assert(cv);
 
-  mutex_lock( &cv->lock );
+  assert(cv->init == CVAR_INITIALIZED);
 
-  assert( cv->init == CVAR_INITIALIZED );
-
-  assert ( cv->waiting_queue.head == NULL );
+  assert(cv->waiting_queue.head == NULL);
 
   cv->init = CVAR_UNINITIALIZED;
 
-  mutex_unlock( &cv->lock );
-
-  mutex_destroy( &cv->lock );
 }
 
 /** @brief Waits for a condition to be true associated with cv
@@ -94,32 +80,24 @@ void cond_destroy( cond_t *cv ) {
  *
  *  @return void
  */
-void cond_wait( cond_t *cv, mutex_t *mp ) {
+void cond_wait(cond_t *cv, mutex_t *mp) {
 
-  assert ( cv && mp );
+  assert(cv && mp);
 
-  assert ( cv->init == CVAR_INITIALIZED );
-
-  // Make the operation atomic
-  mutex_lock( &cv->lock );
+  assert(cv->init == CVAR_INITIALIZED);
 
   // Add this thread to the waiting queue of this condition variable
-  queue_insert_node( &cv->waiting_queue, (void*) thr_get_kernel_id(thr_getid()) );
+  queue_insert_node(&cv->waiting_queue, (void *)thr_get_kernel_id(thr_getid()));
 
   // Release the mutex so that other threads can run now
-  /* TODO; Could we put mutex_unlock above the call to queue_insert_node() ?
-   * We don't want to hold the mutex for too long... */
-  mutex_unlock( mp );
-
-  mutex_unlock( &cv->lock );
+  mutex_unlock(mp);
 
   // Tell the scheduler to not run this thread
   int dont_run = DONT_RUN;
-  deschedule( &dont_run );
+  deschedule(&dont_run);
 
   // Take the mutex before leaving cvar_wait
-  mutex_lock( mp );
-
+  mutex_lock(mp);
 }
 
 /** @brief Wakes up a thread waiting on the condition variable pointed to
@@ -129,26 +107,23 @@ void cond_wait( cond_t *cv, mutex_t *mp ) {
  *
  *  @return void
  */
-void cond_signal( cond_t *cv ) {
+void cond_signal(cond_t *cv) {
 
-  assert ( cv );
+  assert(cv);
 
-  assert ( cv->init == CVAR_INITIALIZED );
+  assert(cv->init == CVAR_INITIALIZED);
 
-  // Make the whole operation atomic
-  mutex_lock( &cv->lock );
+  // Pop the head element from the queue
+  void *tid = queue_delete_node(&cv->waiting_queue);
 
-  if ( cv->waiting_queue.head != NULL ) {
-    // waiting queue is not empty
-    void *tid = queue_delete_node( &cv->waiting_queue );
+  // Check that the queue was not empty
+  if (tid != NULL) {
 
     // Start the thread which was just dequed from the waiting queue
-    while (make_runnable( ( int )tid ) < 0) {
-      continue;
+    while (make_runnable((int)tid) < 0) {
+      yield((int)tid);
     }
   }
-
-  mutex_unlock( &cv->lock );
 }
 
 /** @brief Wakes up all threads waiting on the condition variable pointed to
@@ -158,23 +133,19 @@ void cond_signal( cond_t *cv ) {
  *
  *  @return void
  */
-void cond_broadcast( cond_t *cv ) {
+void cond_broadcast(cond_t *cv) {
 
-  assert ( cv );
+  assert(cv);
 
-  assert ( cv->init == CVAR_INITIALIZED );
+  assert(cv->init == CVAR_INITIALIZED);
 
-  // Make the whole operation atomic
-  mutex_lock( &cv->lock );
+  void* tid = NULL;
 
   // Loop through the whole waiting queue
-  while ( cv->waiting_queue.head != NULL ) {
-    // waiting queue is not elockty
-    void *tid = queue_delete_node( &cv->waiting_queue );
-
-    // Start the thread which was just dequed
-    make_runnable( ( int )tid );
+  while ( (tid = queue_delete_node(&cv->waiting_queue)) != NULL ) {
+    while (make_runnable((int)tid) < 0) {
+      yield((int)(tid));
+    }
   }
 
-  mutex_unlock( &cv->lock );
 }

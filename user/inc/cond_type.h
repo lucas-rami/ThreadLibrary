@@ -12,7 +12,6 @@
 typedef struct cond {
   int init;
   generic_queue_t waiting_queue;
-  mutex_t lock;
 } cond_t;
 
 #endif /* _COND_TYPE_H */
