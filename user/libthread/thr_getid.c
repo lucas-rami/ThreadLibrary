@@ -8,6 +8,7 @@
 #include <hash_table.h>
 #include <stdlib.h>
 #include <thr_internals.h>
+#include <cond.h>
 
 /** @brief Returns the library level thread id of the current thread
  *

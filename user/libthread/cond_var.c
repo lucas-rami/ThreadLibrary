@@ -7,12 +7,12 @@
  *  @author akanjani, lramire1
  */
 
-#include <cond_type.h>
 #include <cond.h>
 #include <syscall.h>
 #include <stdio.h>
 #include <thread.h>
 #include <thr_internals.h>
+
 
 #define CVAR_INITIALIZED 1
 #define CVAR_UNINITIALIZED 0

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <syscall.h>
 #include <thr_internals.h>
+#include <cond.h>
 
 /** @brief Exit the thread with an exit status
  *

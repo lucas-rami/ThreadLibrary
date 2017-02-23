@@ -6,8 +6,9 @@
 #ifndef _MUTEX_TYPE_H
 #define _MUTEX_TYPE_H
 
-#include <queue.h>
 #include <spinlock.h>
+#include <queue.h>
+#include <generic_node.h>
 
 typedef struct mutex {
   int init;

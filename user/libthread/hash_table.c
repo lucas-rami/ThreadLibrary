@@ -6,9 +6,10 @@
  *  @author akanjani, lramire1
  */
 
-#include <data_structures.h>
+#include <hash_table.h>
 #include <linked_list.h>
 #include <stdlib.h>
+#include <mutex.h>
 
 /** @brief Initialize the hash table
  *
@@ -41,13 +42,31 @@ int hash_table_init(generic_hash_table_t *hash_table, unsigned int nb_buckets,
     return -1;
   }
 
-  // Initialize eack linked list
+  // Allocate the mutexes
+  hash_table->mutexes =
+      calloc(hash_table->nb_buckets, sizeof(mutex_t));
+  if (hash_table->mutexes == NULL) {
+    return -1;
+  }
+
+  // Initialize the hash table
   int i;
   for (i = 0; i < hash_table->nb_buckets; ++i) {
+
+    // Initialize each list
     if (linked_list_init(&hash_table->buckets[i], find) < 0) {
       free(hash_table->buckets);
+      free(hash_table->mutexes);
       return -1;
     }
+
+    // Initialize each mutex
+    if (mutex_init(&hash_table->mutexes[i]) < 0) {
+      free(hash_table->buckets);
+      free(hash_table->mutexes);
+      return -1;
+    }
+
   }
 
   return 0;
@@ -74,7 +93,7 @@ int hash_table_add_element(generic_hash_table_t *hash_table, void *elem) {
   }
 
   // Add the element to the appropriate linked list
-  if (linked_list_insert_node(&hash_table->buckets[bucket], elem) < 0) {
+  if (linked_list_insert_node(&hash_table->buckets[bucket], elem, &hash_table->mutexes[bucket]) < 0) {
     return -1;
   }
 
@@ -102,7 +121,7 @@ void *hash_table_remove_element(generic_hash_table_t *hash_table, void *elem) {
     return NULL;
   }
 
-  return linked_list_delete_node(&hash_table->buckets[bucket], elem);
+  return linked_list_delete_node(&hash_table->buckets[bucket], elem, &hash_table->mutexes[bucket]);
 }
 
 /** @brief Get an element in the hash table
@@ -125,5 +144,5 @@ void *hash_table_get_element(generic_hash_table_t *hash_table, void *elem) {
     return NULL;
   }
 
-  return linked_list_get_node(&hash_table->buckets[bucket], elem);
+  return linked_list_get_node(&hash_table->buckets[bucket], elem, &hash_table->mutexes[bucket]);
 }

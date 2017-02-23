@@ -7,10 +7,10 @@
 #ifndef _GLOBAL_STATE_H_
 #define _GLOBAL_STATE_H_
 
-#include <data_structures.h>
-#include <mutex.h>
-#include <cond.h>
+#include <mutex_type.h>
+#include <cond_type.h>
 #include <syscall.h>
+#include <hash_table.h>
 
 #define WAITING_ON 0
 #define EXITED 1
@@ -88,8 +88,6 @@ typedef struct task {
 
   // Data structure holding the TCB of all threads in the task
   generic_hash_table_t tcbs;
-  // Mutex for TCBs access
-  mutex_t tcbs_mutex;
 
   /*------------------------------*/
 
