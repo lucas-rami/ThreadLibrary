@@ -9,6 +9,10 @@
 #include <spinlock.h>
 #include <atomic_ops.h>
 #include <syscall.h>
+#include <spinlock_asm.h>
+#include <thr_internals.h>
+#include <simics.h>
+#include <thread.h>
 
 #define SPINLOCK_UNLOCKED 0
 #define SPINLOCK_LOCKED 1
@@ -26,8 +30,11 @@ int spinlock_init( spinlock_t *lock ) {
     return -1;
   }
 
-  // Initialize the lock as unlocked
-  *lock = SPINLOCK_UNLOCKED;
+  lock->prev = 0;
+
+  lock->next_ticket = 1;
+
+  lock->curr_thread = -1;
 
   return 0;
 }
@@ -42,10 +49,14 @@ int spinlock_init( spinlock_t *lock ) {
  *  @return void
  */
 void spinlock_acquire( spinlock_t *lock ) {
-  // Try to atomically get the lock and loop until we don't
-  while( atomic_exchange( lock, SPINLOCK_LOCKED ) == SPINLOCK_LOCKED ) {
+
+  int j = 1;
+  int my_ticket = atomic_add_and_update( &lock->next_ticket, j );
+
+  while( ( lock->prev + 1 ) != my_ticket ) {
     yield( -1 );
   }
+  // lock->curr_thread = thr_get_kernel_id( thr_getid() );
 }
 
 /** @brief Releases a spinlock. Atomically changes the state to UNLOCKED
@@ -57,5 +68,9 @@ void spinlock_acquire( spinlock_t *lock ) {
 void spinlock_release( spinlock_t *lock ) {
   // Atomically set the lock as unlocked. No need to loop as we should be
   // able to change the state in our first try
-  atomic_exchange( lock, SPINLOCK_UNLOCKED );
+  /*if ( lock->curr_thread == -1 ) {
+    // panic
+    lprintf( "ERROR! Release on a non acquired spinlock\n" );
+  }*/
+  lock->prev++;
 }

@@ -6,7 +6,9 @@
 #ifndef _SPINLOCK_H_
 #define _SPINLOCK_H_
 
-typedef int spinlock_t;
+typedef struct spinlock {
+  int prev, next_ticket, curr_thread;
+} spinlock_t;
 
 int spinlock_init( spinlock_t *lock );
 void spinlock_acquire( spinlock_t *lock );

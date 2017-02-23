@@ -75,7 +75,7 @@ STUDENTTESTS = print_test fork_test
 ###########################################################################
 # Object files for your thread library
 ###########################################################################
-THREAD_OBJS = malloc.o panic.o mutex.o atomic_ops.o cond_var.o queue.o linked_list.o hash_table.o spinlock.o thr_create.o thread_fork.o thr_init.o thr_exit.o thr_join.o tcb.o get_esp.o thr_getid.o thr_yield.o sem.o rwlock.o rwlock_helper.o
+THREAD_OBJS = malloc.o panic.o mutex.o atomic_ops.o cond_var.o queue.o linked_list.o hash_table.o spinlock.o thr_create.o thread_fork.o thr_init.o thr_exit.o thr_join.o tcb.o get_esp.o thr_getid.o thr_yield.o sem.o rwlock.o rwlock_helper.o spinlock_asm.o
 
 # Thread Group Library Support.
 #
