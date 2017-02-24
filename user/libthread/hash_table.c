@@ -28,7 +28,7 @@ int hash_table_init(generic_hash_table_t *hash_table, unsigned int nb_buckets,
                     unsigned int (*hash_function)(void *, unsigned int)) {
 
   // Check validity of arguments
-  if (hash_table == NULL) {
+  if (hash_table == NULL || nb_buckets <= 0 || find == NULL || hash_function == NULL) {
     return -1;
   }
 

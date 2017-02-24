@@ -11,7 +11,8 @@
 #include <thread.h>
 #include <cond.h>
 
-#define NB_BUCKETS_TCB 16
+// Number of buckets for the hash table containing the TCBs
+#define NB_BUCKETS_TCB 32
 
 /** @brief Initialize the thread library
  *
