@@ -2,6 +2,8 @@
  *
  *  @brief This file may be used to define things
  *         internal to the thread library.
+ *
+ *  @author akanjani, lramire1
  */
 
 #ifndef THR_INTERNALS_H

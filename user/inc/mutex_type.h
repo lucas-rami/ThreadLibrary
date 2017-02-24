@@ -7,7 +7,19 @@
 #define _MUTEX_TYPE_H
 
 typedef struct mutex {
-  int prev, next_ticket, init;
+
+  /** @brief An int which stores the ticket number of the thread which ran last
+   */ 
+  int prev;
+
+  /** @brief An int which stores the ticket number which should be given to the
+   *   next thread which tries to acquire this lock 
+   */
+  int next_ticket;
+
+  /** @brief An int which stores whether the miutex has been initialized or not
+   */
+  int init;
 } mutex_t;
 
 #endif /* _MUTEX_TYPE_H */

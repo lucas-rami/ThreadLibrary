@@ -4,15 +4,29 @@
  *  @author akanjani, lramire1
  */
 
-#ifndef _LINKED_LIST_H_
-#define _LINKED_LIST_H_
+#ifndef _LINKED_LIST_H
+#define _LINKED_LIST_H
 
 #include <generic_node.h>
 #include <mutex_type.h>
 
 typedef struct linked_list {
-  generic_node_t *head, *tail;
+
+  /** @brief A pointer to the generic_node_t type serving the head of this
+   *   linked list
+   */
+  generic_node_t *head;
+
+  /** @brief A pointer to the generic_node_t type serving the tail of this
+   *   linked list
+   */
+  generic_node_t *tail;
+
+  /** @brief A function pointer to the function which can be used to find an
+   *   element in this linked list
+   */ 
   int (*find)(void *elem, void *value);
+
 } generic_linked_list_t;
 
 int linked_list_init(generic_linked_list_t *list, int (*find)(void *, void *));
@@ -23,4 +37,4 @@ void *linked_list_delete_node(generic_linked_list_t *list, void *value,
 void *linked_list_get_node(const generic_linked_list_t *list, void *value,
                            mutex_t *mp);
 
-#endif /* _LINKED_LIST_H_ */
+#endif /* _LINKED_LIST_H */
