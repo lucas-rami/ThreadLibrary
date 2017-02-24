@@ -32,37 +32,35 @@
  *
  *  @return Zero on success, a negative number on error
  */
-int rwlock_init( rwlock_t *rwlock ) {
+int rwlock_init(rwlock_t *rwlock) {
 
-  if ( !rwlock ) {
+  if (!rwlock) {
     // Invalid parameter
     return -1;
   }
 
-  if ( mutex_init( &rwlock->lock ) < 0 ) {
+  if (mutex_init(&rwlock->lock) < 0) {
     // Mutex init failed
     return -1;
   }
 
   // Lock the mutex to change state
-  mutex_lock( &rwlock->lock );
+  mutex_lock(&rwlock->lock);
 
-  if ( cond_init( &rwlock->read_cvar ) < 0 || cond_init( &rwlock->write_cvar ) ) {
+  if (cond_init(&rwlock->read_cvar) < 0 ||
+      cond_init(&rwlock->write_cvar) < 0) {
     // Condition variable init failed
     return -1;
   }
 
   // Initialize the state of the reader writer lock
   rwlock->init = RWLOCK_INITIALIZED;
-
   rwlock->waiting_readers = rwlock->active_readers = 0;
-
   rwlock->waiting_writers = rwlock->active_writers = 0;
-  
   rwlock->curr_op = RWLOCK_INVALID;
 
   // Unlock the mutex. We are done
-  mutex_unlock( &rwlock->lock );
+  mutex_unlock(&rwlock->lock);
 
   return 0;
 }
@@ -78,26 +76,23 @@ int rwlock_init( rwlock_t *rwlock ) {
  *
  *  @return void
  */
-void rwlock_lock( rwlock_t *rwlock, int type ) {
+void rwlock_lock(rwlock_t *rwlock, int type) {
 
-  if ( !rwlock || ( type != RWLOCK_READ && type != RWLOCK_WRITE ) ) {
+  if (!rwlock || (type != RWLOCK_READ && type != RWLOCK_WRITE)) {
     // Invalid parameter(s)
     return;
   }
 
-  if ( rwlock->init != RWLOCK_INITIALIZED ) {
-    // ERROR! lock on uninitialized rwlock
-    lprintf( "ERROR! lock on uninitialized rwlock" );
-  }
+  // Assert that the rwlock is initialized when this function is called
+  assert(rwlock->init == RWLOCK_INITIALIZED);
 
-  if ( type == RWLOCK_READ ) {
+  if (type == RWLOCK_READ) {
     // The thread wants to read
-    start_read( rwlock );
+    start_read(rwlock);
   } else {
     // The thread wants to write
-    start_write( rwlock );
+    start_write(rwlock);
   }
-
 }
 
 /** @brief This function indicates that the calling thread is done using the 
@@ -118,37 +113,31 @@ void rwlock_lock( rwlock_t *rwlock, int type ) {
  *
  *  @return void
  */
-void rwlock_unlock( rwlock_t *rwlock ) {
+void rwlock_unlock(rwlock_t *rwlock) {
 
-  if ( !rwlock ) {
+  if (!rwlock) {
     // Invalid parameter
     return;
   }
 
-  if ( rwlock->init != RWLOCK_INITIALIZED ) {
-    // ERROR! Unlock on uninitialized rwlock
-    // TODO: panic?
-    lprintf( "ERROR! unlock on uninitialized rwlock" );
-  }
+  // Assert that the rwlock is initialized when this function is called
+  assert(rwlock->init == RWLOCK_INITIALIZED);
 
   // Take the lock to check state
-  mutex_lock( &rwlock->lock );
+  mutex_lock(&rwlock->lock);
 
-  if ( rwlock->active_readers == 0 && rwlock->active_writers == 0 ) {
-    // ERROR! Unlock on not locked rwlock
-    // TODO: panic? mutex release?
-    lprintf( "ERROR! unlock on uninitialized rwlock" );
-  }
+  // Assert that at least one thread is actively running with this lock
+  assert(rwlock->active_readers != 0 || rwlock->active_writers != 0);
 
   // Unlock the lock as we are done accessing state
-  mutex_unlock( &rwlock->lock );
+  mutex_unlock(&rwlock->lock);
 
-  if ( rwlock->curr_op == RWLOCK_READ ) {
+  if (rwlock->curr_op == RWLOCK_READ) {
     // This thread was a reader
-    stop_read( rwlock );
+    stop_read(rwlock);
   } else {
     // This thread was a writer
-    stop_write( rwlock );
+    stop_write(rwlock);
   }
 }
 
@@ -163,41 +152,35 @@ void rwlock_unlock( rwlock_t *rwlock ) {
  *
  *  @return void
  */
-void rwlock_destroy( rwlock_t *rwlock ) {
+void rwlock_destroy(rwlock_t *rwlock) {
 
-  if ( !rwlock ) {
+  if (!rwlock) {
     // Invalid parameter
     return;
   }
 
-  if ( rwlock->init != RWLOCK_INITIALIZED ) {
-    // ERROR! Destroy on uninitialized rwlock
-    // TODO: panic?
-    lprintf( "ERROR! destroy on uninitialized rwlock" );
-  }
+  // Assert that the rwlock is initialized when this function is called
+  assert(rwlock->init == RWLOCK_INITIALIZED);
 
   // Lock the mutex to check/modify state
-  mutex_lock( &rwlock->lock );
+  mutex_lock(&rwlock->lock);
 
-  if ( rwlock->active_readers != 0 || rwlock->active_writers != 0 || 
-       rwlock->waiting_readers != 0 || rwlock->waiting_writers != 0 ) {
-    // ERROR! Destroy on busy rwlock
-    // TODO: panic?
-    lprintf( "ERROR! destroy on busy rwlock" );
-  }
+  // Assert that there is no thread currently waiting/running for this rwlock
+  assert(rwlock->active_readers == 0 && rwlock->active_writers == 0); 
+  assert(rwlock->waiting_readers == 0 && rwlock->waiting_writers == 0);
 
   // Destroy the condition variables
-  cond_destroy( &rwlock->read_cvar );
-  cond_destroy( &rwlock->write_cvar );
+  cond_destroy(&rwlock->read_cvar);
+  cond_destroy(&rwlock->write_cvar);
   
   // Reset the initialized state
   rwlock->init = RWLOCK_UNINITIALIZED;
 
   // Unlock the mutex as we are done
-  mutex_unlock( &rwlock->lock );
+  mutex_unlock(&rwlock->lock);
 
   // Destroy the mutex
-  mutex_destroy( &rwlock->lock );
+  mutex_destroy(&rwlock->lock);
 }
 
 /** @brief A thread may call this function only if it already holds the lock 
@@ -213,26 +196,26 @@ void rwlock_destroy( rwlock_t *rwlock ) {
  *
  *  @return void
  */
-void rwlock_downgrade( rwlock_t *rwlock ) {
+void rwlock_downgrade(rwlock_t *rwlock) {
 
-  if ( !rwlock ) {
+  if (!rwlock) {
     // Invalid parameter
     return;
   }
 
-  if ( rwlock->active_writers <= 0 || rwlock->curr_op != RWLOCK_WRITE ) {
+  if (rwlock->active_writers <= 0) {
     // No writer is running
     return;
   }
 
   // Lock the mutex to modify state
-  mutex_lock( &rwlock->lock );
+  mutex_lock(&rwlock->lock);
 
   // Decrement the number of active_writers
   rwlock->active_writers--;
 
   // Assert that there is now no active_writer
-  assert( rwlock->active_writers == 0 );
+  assert(rwlock->active_writers == 0);
 
   // Increment the number of active readers
   rwlock->active_readers++;
@@ -241,9 +224,8 @@ void rwlock_downgrade( rwlock_t *rwlock ) {
   rwlock->curr_op = RWLOCK_READ;
 
   // Broadcast to all reader threads waiting for the read_cvar
-  cond_broadcast( &rwlock->read_cvar );
+  cond_broadcast(&rwlock->read_cvar);
 
   // Unlock the mutex. We are done
-  mutex_unlock( &rwlock->lock );
- 
+  mutex_unlock(&rwlock->lock);
 }

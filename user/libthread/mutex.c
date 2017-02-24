@@ -25,14 +25,14 @@
  */
 int mutex_init(mutex_t *mp) {
 
-  if ( !mp ) {
+  if (!mp) {
+    // Invalid parameter
     return -1;
   }
 
+  // Initialize the state for the mutex
   mp->prev = 0;
-
   mp->next_ticket = 1;
-
   mp->init = MUTEX_INITIALIZED;
 
   return 0;
@@ -51,19 +51,21 @@ int mutex_init(mutex_t *mp) {
  */
 void mutex_destroy(mutex_t *mp) {
 
-  if ( !mp ) {
-    // panic("Invalid argument to mutex_destroy\n");
-  }
+  // Invalid parameter
+  assert(mp);
 
-  assert( mp->init == MUTEX_INITIALIZED );
+  // Illegal Operation. Destroy on an uninitalized mutex
+  assert(mp->init == MUTEX_INITIALIZED);
 
   int j = 1;
 
-  int my_ticket = atomic_add_and_update( &mp->next_ticket, j );
+  // Generate a new ticket for this thread
+  int my_ticket = atomic_add_and_update(&mp->next_ticket, j);
 
   // Ensure that no other thread is locked or trying to lock this mutex
-  assert( ( mp->prev + 1 ) == my_ticket );  
+  assert((mp->prev + 1) == my_ticket);  
 
+  // Reset the mutex state
   mp->init = MUTEX_UNINITIALIZED;
 }
 
@@ -78,21 +80,26 @@ void mutex_destroy(mutex_t *mp) {
  */
 void mutex_lock(mutex_t *mp) {
 
-  assert( mp && mp->init == MUTEX_INITIALIZED );
+  // Validate parameter and the fact that the mutex is initialized
+  assert(mp && mp->init == MUTEX_INITIALIZED);
 
   int j = 1;
-  int my_ticket = atomic_add_and_update( &mp->next_ticket, j );
 
-  while( ( mp->prev + 1 ) != my_ticket ) {
-    yield( -1 );
+  // Generate a new ticket for this thread
+  int my_ticket = atomic_add_and_update(&mp->next_ticket, j);
+
+  while((mp->prev + 1) != my_ticket) {
+    // A thread which acquired the mutex earlier is running
+    // Yield till it releases the lock
+    yield(-1);
   }
 
 }
 
 /** @brief Gives up the lock on a mutex
  *
- * The calling thread gives up its claim to the lock. It is illegal
- * for an application to unlock a mutex that is not locked.
+ *  The calling thread gives up its claim to the lock. It is illegal
+ *  for an application to unlock a mutex that is not locked.
  *
  *  @param mp The mutex to which the lock belongs
  *
@@ -100,8 +107,9 @@ void mutex_lock(mutex_t *mp) {
  */
 void mutex_unlock(mutex_t *mp) {
 
-  assert( mp && mp->init == MUTEX_INITIALIZED );
+  // Validate parameter and the fact that the mutex is initialized
+  assert(mp && mp->init == MUTEX_INITIALIZED);
 
+  // Increment the prev value which stores the ticket of the last run thread
   mp->prev++;
-
 }

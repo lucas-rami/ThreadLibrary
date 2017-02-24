@@ -44,7 +44,8 @@ int linked_list_init(generic_linked_list_t *list, int (*find)(void *, void *)) {
  *
  *  @return 0 on success, a negative error code on failure
  */
-int linked_list_insert_node(generic_linked_list_t *list, void *value, mutex_t* mp) {
+int linked_list_insert_node(generic_linked_list_t *list, void *value,
+                            mutex_t* mp) {
 
   // Check validity of arguments
   if (list == NULL || value == NULL) {
@@ -85,7 +86,8 @@ int linked_list_insert_node(generic_linked_list_t *list, void *value, mutex_t* m
  *  @return The deleted node's value if the element was found in the list.
  *  NULL otherwise
  */
-void *linked_list_delete_node(generic_linked_list_t *list, void *value, mutex_t* mp) {
+void *linked_list_delete_node(generic_linked_list_t *list, void *value, 
+                              mutex_t* mp) {
 
   // Check validity of arguments
   if (list == NULL || value == NULL) {
@@ -142,7 +144,8 @@ void *linked_list_delete_node(generic_linked_list_t *list, void *value, mutex_t*
  *
  *  @return The element if it was found in the list. NULL otherwise.
  */
-void *linked_list_get_node(const generic_linked_list_t *list, void *value, mutex_t* mp) {
+void *linked_list_get_node(const generic_linked_list_t *list, void *value,
+                           mutex_t* mp) {
 
   // Check validity of arguments
   if (list == NULL || value == NULL) {

@@ -11,6 +11,10 @@
 #include <ureg.h>
 #include <stddef.h>
 #include <simics.h>
+#include <assert.h>
+
+// Maximum stack size is assumed to be 8MB like Linux
+#define MAX_STACK_SIZE 0x0100000000000000
 
 /** @brief The exception handler for single threaded tasks
  *
@@ -26,32 +30,35 @@
  */
 void singlethread_handler(void* arg, ureg_t *ureg) {
 
-  if ( ureg->cause == SWEXN_CAUSE_PAGEFAULT ) {
+  if (ureg->cause == SWEXN_CAUSE_PAGEFAULT) {
 
-    // TODO: Add a check for if this is a page fault for heap and not stack
-    // TODO: Check if the error flags can help us?
+    // Check if the page fault is in the stack limit for this task
+    if (ureg->cr2 < ((unsigned int)task.stack_highest - MAX_STACK_SIZE)) {
+      // Not a page fault for the stack
+      task_vanish(-1);
+    }
 
     // Calculate the Number of pages required
     int num_of_pages_reqd =
-      ( ( unsigned int )task.stack_lowest / PAGE_SIZE ) -
-      ( ureg->cr2 / PAGE_SIZE );
+      ((unsigned int)task.stack_lowest / PAGE_SIZE) -
+      (ureg->cr2 / PAGE_SIZE);
 
     int growth_size = num_of_pages_reqd * PAGE_SIZE;
 
-    if ( new_pages( ( (char*)task.stack_lowest - growth_size ),
-         growth_size ) < 0 ) {
+    if (new_pages(((char*)task.stack_lowest - growth_size),
+         growth_size) < 0) {
       // Can't grow the stack further. Something went really wrong
       // Revert back to default behaviour
-      vanish();
+      task_vanish(-1);
     }
-    task.stack_lowest =  (void *)( (char*)task.stack_lowest - growth_size );
+    task.stack_lowest = (void *)((char*)task.stack_lowest - growth_size);
   }
 
   // Register the handler again
-  if ( swexn( exception_handler_stack + PAGE_SIZE,
-       singlethread_handler, NULL, ureg ) < 0 ) {
+  if (swexn(exception_handler_stack + PAGE_SIZE,
+       singlethread_handler, NULL, ureg) < 0) {
     // Can't register the handler
-    // TODO: assert?
+    assert(0);
   }
 }
 

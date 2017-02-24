@@ -18,13 +18,12 @@
  *
  *  @return NULL on error, or a pointer to the generic_node_t type new node
  */
-static generic_node_t *make_node( void *value ) {
+static generic_node_t *make_node(void *value) {
 
   // Allocate the space for the new node
-  generic_node_t *new_node = ( generic_node_t *) malloc(
-    sizeof( generic_node_t ) );
+  generic_node_t *new_node = (generic_node_t *)malloc(sizeof(generic_node_t));
 
-  if ( !new_node ) {
+  if (!new_node) {
     // malloc error
     return NULL;
   }
@@ -44,13 +43,16 @@ static generic_node_t *make_node( void *value ) {
  */
 int queue_init(generic_queue_t *list) {
 
-  // Check validity of argument
+  // Check validity of the argument
   if (list == NULL) {
     return -1;
   }
+
+  // Initialize the head and tail to NULL
   list->head = NULL;
   list->tail = NULL;
 
+  // Initialize the mutex
   if (mutex_init(&list->mp) < 0) {
     return -1;
   }
@@ -66,12 +68,12 @@ int queue_init(generic_queue_t *list) {
  *
  *  @return 0 on success, a negative error code on failure
  */
-int queue_insert_node( generic_queue_t *list, void *value ) {
+int queue_insert_node(generic_queue_t *list, void *value) {
 
   // Make a new node
-  generic_node_t *new_node = make_node( value );
+  generic_node_t *new_node = make_node(value);
 
-  if ( !new_node ) {
+  if (!new_node) {
     // Error creating a new node
     return -1;
   }
@@ -82,19 +84,17 @@ int queue_insert_node( generic_queue_t *list, void *value ) {
   generic_node_t **head = &list->head;
   generic_node_t **tail = &list->tail;
 
-  if ( !head || !tail ) {
+  if (!head || !tail) {
     // Invalid double pointer
-
     mutex_unlock(&list->mp);
     free(new_node);
     return -1;
   }
 
-  if ( *tail == NULL && *head == NULL ) {
+  if (*tail == NULL && *head == NULL) {
     // head is NULL. This is the first element of the list
     *tail = new_node;
     *head = new_node;
-
     mutex_unlock(&list->mp);
     return 0;
   }
@@ -117,7 +117,7 @@ int queue_insert_node( generic_queue_t *list, void *value ) {
  *  @return void* The value of the element in the deleted node cast as a void*
  *   or NULL on error
  */
-void *queue_delete_node( generic_queue_t *list ) {
+void *queue_delete_node(generic_queue_t *list) {
 
   // Acquire mutex
   mutex_lock(&list->mp);
@@ -125,19 +125,19 @@ void *queue_delete_node( generic_queue_t *list ) {
   generic_node_t **head = &list->head;
   generic_node_t **tail = &list->tail;
 
-  if ( !head || !tail ) {
+  if (!head || !tail) {
     // Invalid double pointer
     mutex_unlock(&list->mp);
     return NULL;
   }
 
-  if ( *head == NULL || *tail == NULL ) {
+  if (*head == NULL || *tail == NULL) {
     // list is empty or the tail/head pointer is messed up
     mutex_unlock(&list->mp);
     return NULL;
   }
 
-  if ( *head == *tail ) {
+  if (*head == *tail) {
     // The only element in the list
     *tail = NULL;
   }
@@ -147,13 +147,13 @@ void *queue_delete_node( generic_queue_t *list ) {
   void *ret = (*head)->value;
 
   // Update head
-  *head = ( *head )->next;
+  *head = (*head)->next;
 
   // Release mutex
   mutex_unlock(&list->mp);
 
   // Free the space for deleted node
-  free( tmp );
+  free(tmp);
   tmp = NULL;
 
   return ret;

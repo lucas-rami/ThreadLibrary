@@ -63,13 +63,19 @@ int thr_create(void *(*func)(void *), void *arg) {
   int allocated = TRUE;
   // Define child_stack_low/high and update global state if necessary
   mutex_lock(&task.state_lock);
+
   if (child_stack_high == NULL) {
     allocated = FALSE;
-    child_stack_high = (unsigned int *) ((unsigned int) task.stack_lowest - PAGE_SIZE);
+    child_stack_high = (unsigned int *)((unsigned int) task.stack_lowest - 
+                       PAGE_SIZE);
+
     // Need space for : 1 stack + 1 page (exception stack) + 1 page (guardpage)
-    task.stack_lowest = (unsigned int *)( (unsigned int) task.stack_lowest - (task.stack_size + 2 * PAGE_SIZE));
+    task.stack_lowest = (unsigned int *)((unsigned int)task.stack_lowest -
+                        (task.stack_size + 2 * PAGE_SIZE));
   }
-  child_stack_low = (unsigned int *) ((unsigned int)child_stack_high - task.stack_size - PAGE_SIZE);
+
+  child_stack_low = (unsigned int *)((unsigned int)child_stack_high -
+                    task.stack_size - PAGE_SIZE);
 
   // Give the child thread a library tid
   tcb->library_tid = task.tid;
@@ -82,8 +88,8 @@ int thr_create(void *(*func)(void *), void *arg) {
   tcb->stack_high = child_stack_high;
 
   // Allocate the stack for the child
-  if (allocated == FALSE && new_pages(child_stack_low, (unsigned int)child_stack_high -
-                                     (unsigned int)child_stack_low) < 0) {
+  if (allocated == FALSE && new_pages(child_stack_low, 
+      (unsigned int)child_stack_high - (unsigned int)child_stack_low) < 0) {
 
     // If we could not allocate stack space, put them in the queue
     queue_insert_node(&task.stack_queue, child_stack_high);
@@ -100,14 +106,19 @@ int thr_create(void *(*func)(void *), void *arg) {
   // Initialize the child's stack (at lower addresses than the exception stack)
   unsigned int *child_esp =
       (unsigned int *)((unsigned int)child_stack_high - PAGE_SIZE) - 1;
+
   *child_esp = (unsigned int)tcb; // Address of child's TCB
   --child_esp;
+
   *child_esp = (unsigned int)child_stack_high; // Address of exception stack
   --child_esp;
+
   *child_esp = (unsigned int)arg;
   --child_esp;
+
   *child_esp = (unsigned int)func;
   --child_esp;
+
   // Empty space for "virtual" stub's calling function
   --child_esp;
   *child_esp = (unsigned int)stub; // Address of stub function

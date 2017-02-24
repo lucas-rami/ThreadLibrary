@@ -17,8 +17,8 @@
  *  otherwise the hash table's behavior is undefined.
  *
  *  @param queue          The hash table to initialize
- *  @parem nb_buckets     The number of buckets in the hash table (hash table's size)
- *  @param find           Generic function to find a particular element in the list
+ *  @parem nb_buckets     The number of buckets in the hash table
+ *  @param find           Function to find a particular element in the list
  *  @param hash_function  A hashing function
  *
  *  @return 0 on success, a negative error code on failure
@@ -93,7 +93,8 @@ int hash_table_add_element(generic_hash_table_t *hash_table, void *elem) {
   }
 
   // Add the element to the appropriate linked list
-  if (linked_list_insert_node(&hash_table->buckets[bucket], elem, &hash_table->mutexes[bucket]) < 0) {
+  if (linked_list_insert_node(&hash_table->buckets[bucket], elem,
+      &hash_table->mutexes[bucket]) < 0) {
     return -1;
   }
 
@@ -121,7 +122,8 @@ void *hash_table_remove_element(generic_hash_table_t *hash_table, void *elem) {
     return NULL;
   }
 
-  return linked_list_delete_node(&hash_table->buckets[bucket], elem, &hash_table->mutexes[bucket]);
+  return linked_list_delete_node(&hash_table->buckets[bucket], elem, 
+                                 &hash_table->mutexes[bucket]);
 }
 
 /** @brief Get an element in the hash table
@@ -144,5 +146,6 @@ void *hash_table_get_element(generic_hash_table_t *hash_table, void *elem) {
     return NULL;
   }
 
-  return linked_list_get_node(&hash_table->buckets[bucket], elem, &hash_table->mutexes[bucket]);
+  return linked_list_get_node(&hash_table->buckets[bucket], elem,
+                              &hash_table->mutexes[bucket]);
 }

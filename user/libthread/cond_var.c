@@ -33,11 +33,14 @@
 int cond_init(cond_t *cv) {
 
   if (!cv) {
+    // Invalid parameter
     return -1;
   }
 
+  // Initialize the cvar state
   cv->init = CVAR_INITIALIZED;
 
+  // Initialize the waiting queue
   queue_init(&cv->waiting_queue);
 
   return 0;
@@ -57,14 +60,17 @@ int cond_init(cond_t *cv) {
  */
 void cond_destroy(cond_t *cv) {
 
+  // Invalid parameter
   assert(cv);
 
+  // Illegal Operation. Destroy on an uninitalized cvar
   assert(cv->init == CVAR_INITIALIZED);
 
+  // Illegal Operation. Destroy on a cvar for which thread(s) are waiting for
   assert(cv->waiting_queue.head == NULL);
 
+  // Reset the state
   cv->init = CVAR_UNINITIALIZED;
-
 }
 
 /** @brief Waits for a condition to be true associated with cv
@@ -82,8 +88,10 @@ void cond_destroy(cond_t *cv) {
  */
 void cond_wait(cond_t *cv, mutex_t *mp) {
 
+  // Invalid parameter
   assert(cv && mp);
 
+  // Illegal Operation. cond_wait on an uninitialized cvar
   assert(cv->init == CVAR_INITIALIZED);
 
   // Add this thread to the waiting queue of this condition variable
@@ -109,8 +117,10 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
  */
 void cond_signal(cond_t *cv) {
 
+  // Invalid parameter
   assert(cv);
 
+  // Illegal operation. cond_signal on an uninitialized cvar
   assert(cv->init == CVAR_INITIALIZED);
 
   // Pop the head element from the queue
@@ -121,6 +131,8 @@ void cond_signal(cond_t *cv) {
 
     // Start the thread which was just dequed from the waiting queue
     while (make_runnable((int)tid) < 0) {
+      // The thread hasn't descheduled yet. Yield to it so that it can
+      // deschedule
       yield((int)tid);
     }
   }
@@ -135,17 +147,20 @@ void cond_signal(cond_t *cv) {
  */
 void cond_broadcast(cond_t *cv) {
 
+  // Invalid parameter
   assert(cv);
 
+  // Illegal operation. cond_broadcast on an uninitialized cvar
   assert(cv->init == CVAR_INITIALIZED);
 
   void* tid = NULL;
 
   // Loop through the whole waiting queue
-  while ( (tid = queue_delete_node(&cv->waiting_queue)) != NULL ) {
+  while ((tid = queue_delete_node(&cv->waiting_queue)) != NULL) {
     while (make_runnable((int)tid) < 0) {
+      // The thread hasn't descheduled yet. Yield to it so that it can
+      // deschedule
       yield((int)(tid));
     }
   }
-
 }

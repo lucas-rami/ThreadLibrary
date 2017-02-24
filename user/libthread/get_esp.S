@@ -6,5 +6,5 @@
 .global get_esp
 
 get_esp:
-  movl %esp, %eax
-  ret
+  movl %esp, %eax	# Move esp to eax
+  ret			# Return

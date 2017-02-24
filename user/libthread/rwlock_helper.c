@@ -6,7 +6,6 @@
  *  @author akanjani, lramire1
  */
 
-
 #include <rwlock.h>
 #include <mutex.h>
 #include <cond.h>
@@ -29,23 +28,27 @@
  *
  *  @return void
  */
-void start_read( rwlock_t *rwlock ) {
+void start_read(rwlock_t *rwlock) {
 
-  mutex_lock( &rwlock->lock );
+  // Take a mutex before modifying state
+  mutex_lock(&rwlock->lock);
 
+  // Increment the number of waiting readers
   rwlock->waiting_readers++;
 
-  while( wait_for_read( rwlock ) ) {
-    cond_wait( &rwlock->read_cvar, &rwlock->lock );
+  while(wait_for_read(rwlock) == TRUE) {
+    // We can't take the lock right now.
+    // Wait for the state to change and try again
+    cond_wait(&rwlock->read_cvar, &rwlock->lock);
   }
 
+  // Update the new state
   rwlock->waiting_readers--;
-
   rwlock->active_readers++;
-
   rwlock->curr_op = RWLOCK_READ;
 
-  mutex_unlock( &rwlock->lock );
+  // Release the mutex. We are done
+  mutex_unlock(&rwlock->lock);
 }
 
 /** @brief Checks if the current reader thread has to wait to get the lock. 
@@ -60,12 +63,11 @@ void start_read( rwlock_t *rwlock ) {
  *
  *  @return TRUE if the reader thread has to wait. Otherwise, FALSE
  */
-int wait_for_read( rwlock_t *rwlock ) {
+int wait_for_read(rwlock_t *rwlock) {
 
-  if ( rwlock->active_writers > 0 || rwlock->waiting_writers > 0 ) {
+  if (rwlock->active_writers > 0 || rwlock->waiting_writers > 0) {
     return TRUE;
   }
-
   return FALSE;
 }
 
@@ -82,22 +84,26 @@ int wait_for_read( rwlock_t *rwlock ) {
  *
  *  @return void
  */
-void start_write( rwlock_t *rwlock ) {
+void start_write(rwlock_t *rwlock) {
 
-  mutex_lock( &rwlock->lock );
+  // Take a mutex before modifying state
+  mutex_lock(&rwlock->lock);
 
+  // Increment the number of waiting writers
   rwlock->waiting_writers++;
 
-  while( wait_for_write( rwlock ) ) {
-    cond_wait( &rwlock->write_cvar, &rwlock->lock );
+  while(wait_for_write(rwlock) == TRUE) {
+    // We can't take the lock right now.
+    // Wait for the state to change and try again
+    cond_wait(&rwlock->write_cvar, &rwlock->lock);
   }
 
+  // Update the new state
   rwlock->waiting_writers--;
-
   rwlock->active_writers++;
-
   rwlock->curr_op = RWLOCK_WRITE;
 
+  // Release the mutex. We are done
   mutex_unlock( &rwlock->lock );
 }
 
@@ -115,12 +121,11 @@ void start_write( rwlock_t *rwlock ) {
  *
  *  @return TRUE if the writer thread has to wait. Otherwise, FALSE
  */
-int wait_for_write( rwlock_t *rwlock ) {
+int wait_for_write(rwlock_t *rwlock) {
 
-  if ( rwlock->active_readers > 0 || rwlock->active_writers > 0 ) {
+  if (rwlock->active_readers > 0 || rwlock->active_writers > 0) {
     return TRUE;
   }
-
   return FALSE;
 }
 
@@ -135,17 +140,23 @@ int wait_for_write( rwlock_t *rwlock ) {
  *
  *  @return void
  */
-void stop_read( rwlock_t *rwlock ) {
+void stop_read(rwlock_t *rwlock) {
 
-  mutex_lock( &rwlock->lock );
+  // Take a mutex before modifying state
+  mutex_lock(&rwlock->lock);
 
+  // Decrement the number of active readers
   rwlock->active_readers--;
 
-  if ( rwlock->active_readers == 0 && rwlock->waiting_writers > 0 ) {
-    cond_signal( &rwlock->write_cvar );
+  if (rwlock->active_readers == 0 && rwlock->waiting_writers > 0) {
+    // If no other readers are running and there is at least one thread
+    // waiting for a write lock, we signal the write_cvar so that the writer
+    // gets to run
+    cond_signal(&rwlock->write_cvar);
   }
 
-  mutex_unlock( &rwlock->lock );
+  // Release the mutex. We are done
+  mutex_unlock(&rwlock->lock);
 }
 
 /** @brief Entry point for a thread trying to give up a write lock. 
@@ -160,19 +171,26 @@ void stop_read( rwlock_t *rwlock ) {
  *
  *  @return void
  */
-void stop_write( rwlock_t *rwlock ) {
+void stop_write(rwlock_t *rwlock) {
 
-  mutex_lock( &rwlock->lock );
+  // Take a mutex before modifying state
+  mutex_lock(&rwlock->lock);
 
+  // Decrement the number of active writers
   rwlock->active_writers--;
 
-  assert( rwlock->active_writers == 0 );
+  // Assert that no writer is active now.
+  assert(rwlock->active_writers == 0);
 
-  if ( rwlock->waiting_writers > 0 ) {
-    cond_signal( &rwlock->write_cvar );
+  if (rwlock->waiting_writers > 0) {
+    // At least one thread is waiting to acquire a write lock.
+    // We should let that thread run
+    cond_signal(&rwlock->write_cvar);
   } else {
-    cond_broadcast( &rwlock->read_cvar );
+    // No writer thread in contention. We should let the readers run
+    cond_broadcast(&rwlock->read_cvar);
   }
 
-  mutex_unlock( &rwlock->lock );
+  // Release the mutex. We are done
+  mutex_unlock(&rwlock->lock);
 }

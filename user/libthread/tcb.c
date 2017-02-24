@@ -30,6 +30,7 @@ tcb_t *get_tcb() {
     unsigned int size = task.stack_size + 2 * PAGE_SIZE;
     unsigned int thr_stack =
         ((unsigned int)task.stack_highest_childs - esp) / size;
+
     tcb_t **tcb = (tcb_t **)((unsigned int)task.stack_highest_childs -
                              thr_stack * size - PAGE_SIZE - 4);
     return *tcb;
@@ -47,6 +48,7 @@ tcb_t *get_tcb() {
 int find_tcb(void *tcb, void *tid) {
   tcb_t *t = tcb;
   int *library_tid = tid;
+
   if (t->library_tid == *library_tid) {
     return 1;
   }

@@ -14,7 +14,10 @@
 #define FALSE 0
 #define TRUE 1
 
+// State of the mutex
 static int initialized = FALSE;
+
+// Global mutex for malloc
 static mutex_t alloc_mutex;
 
 void *malloc(size_t __size) {

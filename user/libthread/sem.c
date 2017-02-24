@@ -12,6 +12,7 @@
 #include <mutex.h>
 #include <cond.h>
 #include <simics.h>
+#include <assert.h>
 
 #define SEM_INITIALIZED 1
 #define SEM_UNINITIALIZED 0
@@ -30,24 +31,22 @@
  *
  *  @return Zero on success, a negative number on error
  */
-int sem_init( sem_t *sem, int count ) {
+int sem_init(sem_t *sem, int count) {
 
-  if ( !sem || count <= 0 ) {
+  if (!sem || count <= 0) {
     // Invalid arguments
     return -1;
   }
 
   // Initialize the mutex and the condition variable for this semaphore
-  if ( mutex_init( &sem->lock ) < 0 || cond_init( &sem->cvar ) < 0 ) {
+  if (mutex_init(&sem->lock) < 0 || cond_init(&sem->cvar) < 0) {
     // failed to init the mutex for this semaphore
     return -1;
   }
 
   // Lock the mutex to ensure atomicity
-  mutex_lock( &sem->lock );
+  mutex_lock(&sem->lock);
 
-  // TODO: Do we need this? we can set the value of available resources as -1
-  // instead and use that to figure out if the semaphore is init or not.
   // Initialize the semaphore state
   sem->init = SEM_INITIALIZED;
 
@@ -59,7 +58,7 @@ int sem_init( sem_t *sem, int count ) {
   sem->wokenup_waiting = 0;
 
   // Unlock the mutex as the initialization is done
-  mutex_unlock( &sem->lock );
+  mutex_unlock(&sem->lock);
 
   return 0;
 }
@@ -74,36 +73,32 @@ int sem_init( sem_t *sem, int count ) {
  *
  *  @return void
  */
-void sem_wait( sem_t *sem ) {
+void sem_wait(sem_t *sem) {
 
-  if ( !sem ) {
+  if (!sem) {
     // Invalid argument
     return;
   }
 
-  if ( sem->init != SEM_INITIALIZED ) {
-    // TODO: panic?
-    // The semaphore isn't initialized. ERROR!
-    lprintf( "Sem wait on uninitialized semaphore\n" );
-    return;
-  }
+  // Assert that the semaphore is initialized
+  assert(sem->init == SEM_INITIALIZED);
 
   // Take the lock to ensure atomicity
-  mutex_lock( &sem->lock );
+  mutex_lock(&sem->lock);
 
   // Decrement the number of available resources
   sem->available_resources--;
 
-  if ( sem->available_resources < 0 ) {
+  if (sem->available_resources < 0) {
     // All the available resources are being used as of now and there is
     // at least one thread waiting to get the resource
     do {
 
       // Wait for the condition variable to be signaled. Wait for a thread
       // to give up resources
-      cond_wait( &sem->cvar, &sem->lock );
+      cond_wait(&sem->cvar, &sem->lock);
 
-    } while ( sem->wokenup_waiting < 1 );
+    } while (sem->wokenup_waiting < 1);
 
     // As one of the woken up threads now gets to run, decrement the number of
     // threads woken up but not yet executed
@@ -111,7 +106,7 @@ void sem_wait( sem_t *sem ) {
   }
 
   // Release the lock as we are done
-  mutex_unlock( &sem->lock );
+  mutex_unlock(&sem->lock);
 }
 
 /** @brief This function wakes up a thread waiting on the semaphore pointed 
@@ -121,39 +116,34 @@ void sem_wait( sem_t *sem ) {
  *
  *  @return void
  */
-void sem_signal( sem_t *sem ) {
+void sem_signal(sem_t *sem) {
 
-  if ( !sem ) {
+  if (!sem) {
     // Invalid parameter
     return;
   }
 
-  if ( sem->init != SEM_INITIALIZED ) {
-    // TODO: panic?
-    // Sem signal on an uninitialized semaphore. ERROR!
-    lprintf( "Sem wait on uninitialized semaphore\n" );
-    return;
-  }
+  // Assert that the semaphore is initialized
+  assert(sem->init == SEM_INITIALIZED);
 
   // Take the lock to ensure atomicity
-  mutex_lock( &sem->lock );
+  mutex_lock(&sem->lock);
 
   // Increment the number of resources available
   sem->available_resources++;
 
-  if ( sem->available_resources <= 0 ) {
+  if (sem->available_resources <= 0) {
     // There is at least one thread waiting for a resource
-
     // Increment the number of threads woken up till now
     sem->wokenup_waiting++;
 
     // Signal the condition variable so that any thread waiting on this
     // condition variable gets to run
-    cond_signal( &sem->cvar );
+    cond_signal(&sem->cvar);
   }
 
   // Release the lock as we are done
-  mutex_unlock( &sem->lock );
+  mutex_unlock(&sem->lock);
 }
 
 /** @brief Destroys a semaphore
@@ -169,43 +159,28 @@ void sem_signal( sem_t *sem ) {
  *
  *  @return void
  */
-void sem_destroy( sem_t *sem ) {
+void sem_destroy(sem_t *sem) {
 
-  if ( !sem ) {
+  if (!sem) {
     // Invalid parameter
     return;
   }
 
-  if ( sem->init != SEM_INITIALIZED ) {
-    // TODO: panic?
-    // Sem destory on an uninitialized semaphore. ERROR!
-    lprintf( "Sem wait on uninitialized semaphore\n" );
-    return;
-  }
+  // Assert that the semaphore is initialized
+  assert(sem->init == SEM_INITIALIZED);
 
   // Take the lock to ensure atomicity
-  mutex_lock( &sem->lock );
-
-  if ( sem->available_resources < 0 ) {
-    mutex_unlock( &sem->lock );
-    // PANIC!!!! This is illegal. There are threads waiting on this semaphore
-  }
+  mutex_lock(&sem->lock);
 
   // Set the semaphore state to uninitialized
   sem->init = SEM_UNINITIALIZED;
 
-  // Set the number of available resources less than 0
-  sem->available_resources = -1;
-
-  // Reset the state capturing the number of threads woken up but not yet run
-  sem->wokenup_waiting = 0;
-
   // Destroy the condition variable
-  cond_destroy( &sem->cvar );
+  cond_destroy(&sem->cvar);
 
   // Release the lock as we are done
-  mutex_unlock( &sem->lock );
+  mutex_unlock(&sem->lock);
 
   // Destroy the mutex
-  mutex_destroy( &sem->lock );
+  mutex_destroy(&sem->lock);
 }
