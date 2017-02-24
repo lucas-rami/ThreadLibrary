@@ -18,5 +18,6 @@ typedef struct queue {
 int queue_init(generic_queue_t *list);
 int queue_insert_node(generic_queue_t *list, void *value);
 void *queue_delete_node(generic_queue_t *list);
+int is_queue_empty(generic_queue_t *list);
 
 #endif /* _QUEUE_H_ */

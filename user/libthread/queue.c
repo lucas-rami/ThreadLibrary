@@ -158,3 +158,26 @@ void *queue_delete_node(generic_queue_t *list) {
 
   return ret;
 }
+
+/** @brief Checks if the queue is empty or not
+ *
+ *  @param list A pointer to a generic_queue_t structure which holds
+ *   the head and tail pointer of a queue
+ *
+ *  @return int 1 is list is empty, 0 otherwise
+ */
+int is_queue_empty(generic_queue_t *list) {
+
+  // Acquire mutex
+  mutex_lock(&list->mp);
+  
+  if ( list->head == NULL ) {
+    // List is empty. Release mutex
+    mutex_unlock(&list->mp);
+    return 1;
+  }
+
+  // Release mutex
+  mutex_unlock(&list->mp);
+  return 0;
+}

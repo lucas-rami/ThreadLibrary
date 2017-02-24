@@ -67,7 +67,7 @@ void cond_destroy(cond_t *cv) {
   assert(cv->init == CVAR_INITIALIZED);
 
   // Illegal Operation. Destroy on a cvar for which thread(s) are waiting for
-  assert(cv->waiting_queue.head == NULL);
+  assert(is_queue_empty(&cv->waiting_queue) == 1);
 
   // Reset the state
   cv->init = CVAR_UNINITIALIZED;
