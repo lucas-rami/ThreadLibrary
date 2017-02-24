@@ -13,6 +13,9 @@
 #include <cond.h>
 #include <simics.h>
 
+#define TRUE 1
+#define FALSE 0
+
 /** @brief Create a new thread to run func(arg)
  *
  *  This function allocates a stack for the new thread and
@@ -57,9 +60,11 @@ int thr_create(void *(*func)(void *), void *arg) {
   // Try to find space for a new stack in the queue
   child_stack_high = queue_delete_node(&task.stack_queue);
 
+  int allocated = TRUE;
   // Define child_stack_low/high and update global state if necessary
   mutex_lock(&task.state_lock);
   if (child_stack_high == NULL) {
+    allocated = FALSE;
     child_stack_high = (unsigned int *) ((unsigned int) task.stack_lowest - PAGE_SIZE);
     // Need space for : 1 stack + 1 page (exception stack) + 1 page (guardpage)
     task.stack_lowest = (unsigned int *)( (unsigned int) task.stack_lowest - (task.stack_size + 2 * PAGE_SIZE));
@@ -77,7 +82,7 @@ int thr_create(void *(*func)(void *), void *arg) {
   tcb->stack_high = child_stack_high;
 
   // Allocate the stack for the child
-  if (new_pages(child_stack_low, (unsigned int)child_stack_high -
+  if (allocated == FALSE && new_pages(child_stack_low, (unsigned int)child_stack_high -
                                      (unsigned int)child_stack_low) < 0) {
 
     // If we could not allocate stack space, put them in the queue

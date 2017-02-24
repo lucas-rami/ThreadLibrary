@@ -63,11 +63,6 @@ int thr_join(int tid, void **statusp) {
   // Remove TCB from hash table
   hash_table_remove_element(&task.tcbs, &tid);
 
-  // Deallocate stack pages
-  if (remove_pages(tcb->stack_low) < 0) {
-    // panic("thr_join(): Could not deallocate stack pages !\n");
-  }
-
   // Mark the deallocated pages as free to use for other threads if this isn't
   // the root thread
   if ((unsigned int)tcb->stack_low !=

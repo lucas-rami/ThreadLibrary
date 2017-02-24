@@ -13,8 +13,8 @@
 #include <assert.h>
 #include <rwlock_helper.h>
 
-#define TRUE 0
-#define FALSE 1
+#define TRUE 1
+#define FALSE 0
 
 /** @brief Entry point for a thread trying to get a read lock. 
  *
