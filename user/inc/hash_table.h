@@ -12,22 +12,17 @@
 
 typedef struct hash_table {
 
-  /** @brief A pointer to generic_linked_list_t type which will be used as an 
+  /** @brief A pointer to generic_linked_list_t type which will be used as an
    *   array where each memeber forms a bucket for this hash table
    */
   generic_linked_list_t *buckets;
 
-  /** @brief A pointer to the mutex_t type. An array of mutexes, one for each
-   *   bucket
-   */ 
-  mutex_t *mutexes;
-
   /** @brief An unsigned storing the number of buckets for this hash table
-   */ 
+   */
   unsigned int nb_buckets;
 
   /** @brief A function pointer to the hash function for this hash table
-   */ 
+   */
   unsigned int (*hash_function)(void *elem, unsigned int nb_buckets);
 
   /** @brief A function pointer to the function to find an element in the

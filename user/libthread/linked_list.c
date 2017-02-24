@@ -9,8 +9,8 @@
 
 #include <linked_list.h>
 #include <linked_list.h>
-#include <stdlib.h>
 #include <mutex.h>
+#include <stdlib.h>
 
 /** @brief Initialize the linked list
  *
@@ -33,6 +33,12 @@ int linked_list_init(generic_linked_list_t *list, int (*find)(void *, void *)) {
   list->head = NULL;
   list->tail = NULL;
   list->find = find;
+
+  // Initialize the mutex
+  if (mutex_init(&list->mp) < 0) {
+    return -1;
+  }
+
   return 0;
 }
 
@@ -40,12 +46,10 @@ int linked_list_init(generic_linked_list_t *list, int (*find)(void *, void *)) {
  *
  *  @param list   A linked list
  *  @param value  The new node's value
- *  @param mp     Mutex to ensure thread safe implementation
  *
  *  @return 0 on success, a negative error code on failure
  */
-int linked_list_insert_node(generic_linked_list_t *list, void *value,
-                            mutex_t* mp) {
+int linked_list_insert_node(generic_linked_list_t *list, void *value) {
 
   // Check validity of arguments
   if (list == NULL || value == NULL) {
@@ -60,7 +64,7 @@ int linked_list_insert_node(generic_linked_list_t *list, void *value,
   new_node->value = value;
   new_node->next = NULL;
 
-  mutex_lock(mp);
+  mutex_lock(&list->mp);
 
   if (list->head == NULL && list->tail == NULL) {
     // Linked list is empty
@@ -72,7 +76,7 @@ int linked_list_insert_node(generic_linked_list_t *list, void *value,
     list->tail = new_node;
   }
 
-  mutex_unlock(mp);
+  mutex_unlock(&list->mp);
 
   return 0;
 }
@@ -81,13 +85,11 @@ int linked_list_insert_node(generic_linked_list_t *list, void *value,
  *
  *  @param list   A linked list
  *  @param value  The element to delete
- *  @param mp     Mutex to ensure thread safe implementation
  *
  *  @return The deleted node's value if the element was found in the list.
  *  NULL otherwise
  */
-void *linked_list_delete_node(generic_linked_list_t *list, void *value, 
-                              mutex_t* mp) {
+void *linked_list_delete_node(generic_linked_list_t *list, void *value) {
 
   // Check validity of arguments
   if (list == NULL || value == NULL) {
@@ -99,7 +101,7 @@ void *linked_list_delete_node(generic_linked_list_t *list, void *value,
     return NULL;
   }
 
-  mutex_lock(mp);
+  mutex_lock(&list->mp);
 
   // Iterator on the list's elements
   generic_node_t *node = list->head, *prev = NULL;
@@ -125,14 +127,14 @@ void *linked_list_delete_node(generic_linked_list_t *list, void *value,
       void *ret = node->value;
       free(node);
 
-      mutex_unlock(mp);
+      mutex_unlock(&list->mp);
       return ret;
     }
     prev = node;
     node = node->next;
   }
 
-  mutex_unlock(mp);
+  mutex_unlock(&list->mp);
   return NULL;
 }
 
@@ -140,12 +142,10 @@ void *linked_list_delete_node(generic_linked_list_t *list, void *value,
  *
  *  @param list   A linked list
  *  @param value  The element to ger
- *  @param mp     Mutex to ensure thread safe implementation
  *
  *  @return The element if it was found in the list. NULL otherwise.
  */
-void *linked_list_get_node(const generic_linked_list_t *list, void *value,
-                           mutex_t* mp) {
+void *linked_list_get_node(generic_linked_list_t *list, void *value) {
 
   // Check validity of arguments
   if (list == NULL || value == NULL) {
@@ -157,7 +157,7 @@ void *linked_list_get_node(const generic_linked_list_t *list, void *value,
     return NULL;
   }
 
-  mutex_lock(mp);
+  mutex_lock(&list->mp);
 
   // Iterator on the list's elements
   generic_node_t *iterator = list->head;
@@ -165,12 +165,12 @@ void *linked_list_get_node(const generic_linked_list_t *list, void *value,
   // Loop over the list
   while (iterator != NULL) {
     if (list->find(iterator->value, value)) {
-      mutex_unlock(mp);
+      mutex_unlock(&list->mp);
       return iterator->value;
     }
     iterator = iterator->next;
   }
 
-  mutex_unlock(mp);
+  mutex_unlock(&list->mp);
   return NULL;
 }

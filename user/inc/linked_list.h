@@ -24,17 +24,18 @@ typedef struct linked_list {
 
   /** @brief A function pointer to the function which can be used to find an
    *   element in this linked list
-   */ 
+   */
   int (*find)(void *elem, void *value);
+
+  /** @brief A mutex to guarantee atomic access to the linked list
+   */
+  mutex_t mp;
 
 } generic_linked_list_t;
 
 int linked_list_init(generic_linked_list_t *list, int (*find)(void *, void *));
-int linked_list_insert_node(generic_linked_list_t *list, void *value,
-                            mutex_t *mp);
-void *linked_list_delete_node(generic_linked_list_t *list, void *value,
-                              mutex_t *mp);
-void *linked_list_get_node(const generic_linked_list_t *list, void *value,
-                           mutex_t *mp);
+int linked_list_insert_node(generic_linked_list_t *list, void *value);
+void *linked_list_delete_node(generic_linked_list_t *list, void *value);
+void *linked_list_get_node(generic_linked_list_t *list, void *value);
 
 #endif /* _LINKED_LIST_H */
