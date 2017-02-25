@@ -12,10 +12,23 @@
 #include <syscall.h>
 #include <hash_table.h>
 
+/** @brief State of a thread which means that a thread has joined this thread
+ */
 #define WAITING_ON 0
+
+/** @brief State of a thread which means that the thread has exited
+ */
 #define EXITED 1
+
+/** @brief State of a thread which means that the thread is still running
+ */
 #define RUNNING 2
 
+/** @brief A structure for the thread control block. It contains the library
+ *   thread id, the lowest address of thread's stack space, the highest address
+ *   of the thread's stack space, the thread's return status, its kernel id,
+ *   two condition variables, two mutexes and the thread state.
+ */
 typedef struct tcb {
 
   /** @brief Thread's id (provided by the thread library)
@@ -64,6 +77,8 @@ typedef struct tcb {
 
 } tcb_t;
 
+/** @brief A structure that represents a task
+ */
 typedef struct task {
 
   /** @brief Size for each thread's stack

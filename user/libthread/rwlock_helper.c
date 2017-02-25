@@ -12,7 +12,12 @@
 #include <assert.h>
 #include <rwlock_helper.h>
 
+/** @brief A macro for considering 1 as true
+ */
 #define TRUE 1
+
+/** @brief A macro for considering 0 as false
+ */
 #define FALSE 0
 
 /** @brief Entry point for a thread trying to get a read lock. 

@@ -8,7 +8,6 @@
  */
 
 #include <linked_list.h>
-#include <linked_list.h>
 #include <mutex.h>
 #include <stdlib.h>
 
@@ -17,7 +16,7 @@
  *  The function must be called once before any other function in this file,
  *  otherwise the list's behavior is undefined.
  *
- *  @param queue  The linked list to initialize
+ *  @param list  The linked list to initialize
  *  @param find   Generic function to find a particular element in the list
  *
  *  @return 0 on success, a negative error code on failure

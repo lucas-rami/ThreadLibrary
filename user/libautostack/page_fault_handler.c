@@ -13,7 +13,8 @@
 #include <simics.h>
 #include <assert.h>
 
-// Maximum stack size is assumed to be 8MB like Linux
+/** @brief Maximum stack size is assumed to be 8MB like Linux
+ */
 #define MAX_STACK_SIZE 0x800000
 
 /** @brief The exception handler for single threaded tasks

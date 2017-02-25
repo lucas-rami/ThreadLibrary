@@ -17,8 +17,20 @@
 #include <assert.h>
 #include <rwlock_helper.h>
 
+/** @brief A state of a reader writer lock meaning that a rwlock_destroy has
+ *   not been called after a rwlock_init as of now.
+ */
 #define RWLOCK_INITIALIZED 1
+
+/** @brief A state of a reader writer lock meaning that a rwlock_init has
+ *   not been called after a rwlock_destroy as of now.
+ */
 #define RWLOCK_UNINITIALIZED 0
+
+/** @brief A type of the current operation being performed by threads holding
+ *   the lock. This value is set when rwlock_init has been called and no 
+ *   threads currently hold any locks
+ */
 #define RWLOCK_INVALID 2
 
 /** @brief Initializes a reader writer lock

@@ -1,6 +1,6 @@
 /** @file linked_list.h
  *  @brief This file declares the linked list structure as well as functions to
- * use the generic linked list.
+ *   use the generic linked list.
  *  @author akanjani, lramire1
  */
 
@@ -10,6 +10,8 @@
 #include <generic_node.h>
 #include <mutex_type.h>
 
+/** @brief A structure of a linked list
+ */
 typedef struct linked_list {
 
   /** @brief A pointer to the generic_node_t type serving the head of this

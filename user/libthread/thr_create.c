@@ -13,7 +13,12 @@
 #include <cond.h>
 #include <simics.h>
 
+/** @brief A macro to consider 1 as true
+ */
 #define TRUE 1
+
+/** @brief A macro to consider 0 as false
+ */
 #define FALSE 0
 
 /** @brief Create a new thread to run func(arg)
@@ -163,7 +168,8 @@ int thr_create(void *(*func)(void *), void *arg) {
  *
  *  @param func The function to be ran by the new thread
  *  @param arg The argument to the function
- *  @param stack_high The highest address of the child thread's stack
+ *  @param addr_exception_stack The address of the child thread's exception
+ *   handler space
  *
  *  @return Do not return
  */

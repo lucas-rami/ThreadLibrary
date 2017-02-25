@@ -9,7 +9,12 @@
 #include <mutex.h>
 #include <atomic_ops.h>
 
+/** @brief A macro for 0 being treated as FALSE
+ */
 #define FALSE 0
+
+/** @brief A macro for 1 being treated as TRUE
+ */
 #define TRUE 1
 
 /** @brief State of the mutex

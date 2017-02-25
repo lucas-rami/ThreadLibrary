@@ -8,6 +8,8 @@
 #include <cond_type.h>
 #include <mutex_type.h>
 
+/** @brief A structure of a semaphore
+ */
 typedef struct sem {
 
   /** @brief An int which stores the current state of the semaphore. It can be
@@ -16,7 +18,7 @@ typedef struct sem {
    */
   int init;
 
-  /** @bried An int storing the number of threads that have been made woken up
+  /** @brief An int storing the number of threads that have been made woken up
    *   by the semaphore but haven't started executing yet
    */
   int wokenup_waiting;

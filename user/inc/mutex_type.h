@@ -6,6 +6,8 @@
 #ifndef _MUTEX_TYPE_H
 #define _MUTEX_TYPE_H
 
+/** @brief The structure of a mutex
+ */
 typedef struct mutex {
 
   /** @brief An int which stores the ticket number of the thread which ran last

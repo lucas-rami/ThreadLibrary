@@ -1,11 +1,13 @@
-/** @file data_structures.h
+/** @file generic_node.h
  *  @brief This file declares the generic_node_t structure.
  *  @author akanjani, lramire1
  */
 
-#ifndef _DATA_STRUCTURES_H
-#define _DATA_STRUCTURES_H
+#ifndef _GENERIC_NODE_H
+#define _GENERIC_NODE_H
 
+/** @brief A structure that represents a generic node in a linked list/queue
+ */
 typedef struct generic_node {
 
   /** @brief A void pointer type member which stores the data to be stored in
@@ -19,4 +21,4 @@ typedef struct generic_node {
   struct generic_node *next;
 } generic_node_t;
 
-#endif /* _DATA_STRUCTURES_H */
+#endif /* _GENERIC_NODE_H */

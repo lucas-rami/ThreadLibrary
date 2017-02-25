@@ -10,6 +10,8 @@
 #include <linked_list.h>
 #include <mutex_type.h>
 
+/** @brief A structure that represents a hash table
+ */
 typedef struct hash_table {
 
   /** @brief A pointer to generic_linked_list_t type which will be used as an

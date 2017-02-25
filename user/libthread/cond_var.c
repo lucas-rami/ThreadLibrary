@@ -15,8 +15,19 @@
 #include <thr_internals.h>
 #include <thread.h>
 
+/** @brief The state of a condition variable which means that a cond_init has
+ *   been called but cond_destroy hasn't been called after that
+ */
 #define CVAR_INITIALIZED 1
+
+/** @brief The state of a condition variable which means that a cond_destroy 
+ *   has been called but cond_init hasn't been called after that
+ */
 #define CVAR_UNINITIALIZED 0
+
+/** @brief The parameter to deschedule to put a thread from the running queu to
+ *   the waiting queue of the scheduler.
+ */
 #define DONT_RUN 0
 
 /** @brief Initializes a condition variable

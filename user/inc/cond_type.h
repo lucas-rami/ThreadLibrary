@@ -9,6 +9,8 @@
 #include <queue.h>
 #include <mutex_type.h>
 
+/** A structure of a condition variable
+ */
 typedef struct cond {
 
   /** @brief Stores the current state of the condition variable

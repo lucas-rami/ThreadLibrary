@@ -10,6 +10,10 @@
 #include <generic_node.h>
 #include <mutex_type.h>
 
+/** @brief A structure that represents a generic queue object. It contains
+ *   the head and tail pointers for the queue and the mutex used by it to
+ *   make all of its updates atomic and mutually exclusive
+ */
 typedef struct queue {
 
   /** @brief A pointer to the generic_node_t type serving the head of this

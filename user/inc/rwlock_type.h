@@ -9,6 +9,8 @@
 #include <mutex_type.h>
 #include <cond_type.h>
 
+/** @brief A structure of a reader writer lock
+ */
 typedef struct rwlock {
 
   /** @brief An int storing the number of threads waiting to acquire the

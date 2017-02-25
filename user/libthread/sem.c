@@ -14,7 +14,14 @@
 #include <simics.h>
 #include <assert.h>
 
+/** @brief A state of the semaphore which means that sem_destroy has not
+ *   been called after a sem_init
+ */
 #define SEM_INITIALIZED 1
+
+/** @brief A state of the semaphore which means that sem_init has not
+ *   been called after a sem_destroy
+ */
 #define SEM_UNINITIALIZED 0
 
 /** @brief Initializes a semaphore
@@ -155,7 +162,7 @@ void sem_signal(sem_t *sem) {
  *  for an application to invoke sem destroy() on a semaphore while threads 
  *  are waiting on it.
  *
- *  @param cv A pointer to the condition variable to deactivate
+ *  @param sem A pointer to the semaphore to deactivate
  *
  *  @return void
  */

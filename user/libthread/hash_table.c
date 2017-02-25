@@ -1,4 +1,4 @@
-/** @file linked_list.c
+/** @file hash_table.c
  *
  *  @brief This file contains the definitions for functions which can be used
  *   to manipulate the generic hash table with elements of type void*
@@ -16,8 +16,8 @@
  *  The function must be called once before any other function in this file,
  *  otherwise the hash table's behavior is undefined.
  *
- *  @param queue          The hash table to initialize
- *  @parem nb_buckets     The number of buckets in the hash table
+ *  @param hash_table     The hash table to initialize
+ *  @param nb_buckets     The number of buckets in the hash table
  *  @param find           Function to find a particular element in the list
  *  @param hash_function  A hashing function
  *

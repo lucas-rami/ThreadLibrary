@@ -70,7 +70,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory
 #
-STUDENTTESTS = print_test fork_test
+STUDENTTESTS =
 
 ###########################################################################
 # Object files for your thread library
