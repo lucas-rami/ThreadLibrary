@@ -195,3 +195,24 @@ Our implementation makes it unnecessary to call thr_init() to initialize the
 malloc library, which initializes itself the first time one of its function is
 called. To achieve this we use a mutex and an atomic operation using the XCHG
 instruction.
+
+### 2.5 Mutexes
+
+Our implementation uses Lamport's bakery algorithm. which ensures mutual exclusion,
+progress and bounded waiting. If a thread get a "ticket" to enter the critical section
+but has to wait for its turn, it calls yield(-1) so another thread (and eventually the
+one holding the mutex) can run while it is waiting. Other alternatives were considered
+while implementing mutexes: a simple spinlock which forced each thread to busy wait
+until they got the mutex or an implementation using a queue to keep track of the order
+in which threads were asking for the mutex (and hence ensure bounded waiting). These
+two alternatives were not as fast as Lamport's bakery algorithm, and that's why this
+last was chosen.
+
+### 2.6 Conditional Variables
+
+Our implementation of conditional variables makes use of a queue to keep track of all
+threads waiting on a conditional variable. This queue is thread-safe by default.
+If is fine if someone makes a call to cond_signal() or cond_broadcast() while the
+queue is empty. The funtion will simply return without waking up any thread.
+
+### thr_join() and thr_exit()
