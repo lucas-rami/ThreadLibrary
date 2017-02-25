@@ -36,7 +36,7 @@ safe by implementation, storing the list of free stack "slots". When a child
 thread (i.e. non-root thread) exits, then its stack gets "deallocated" and the
 lowest address of its stack is put in the queue. Later, when a new child
 thread is created, the parent first looks in this queue. If it is empty,
-then the parent thread allocated a new stack towards lower addresses. But if it
+then the parent thread allocates a new stack towards lower addresses. But if it
 is not, then the first value is popped out of it, and the child thread is given
 the stack space corresponding to the address which was in the queue.
 The goal of this mechanism is to prevent segmentation in the stack region of a
@@ -59,7 +59,7 @@ When a TCB is created, the fields called library_tid, stack_low and
 stack_high are set to their final value (they are never modified during the
 thread execution, hence they do not need to be protected with a lock). The
 return_status field may only be written to by the thr_exit() function of the
-thread owning the TCB, hence we do not protect it with a lock neither.
+thread owning the TCB, hence we do not protect it with a lock either.
 
 The kernel_tid field, storing the kernel issued ID for the thread, is protected
 with a mutex for reasons described in 2.2.                           
@@ -148,14 +148,14 @@ to become unpredictable.
             |          .           |        
 0x00...00
 
-Since each thread stack has the same size than the others (except for the root
+Since each thread stack has the same size as the others (except for the root
 thread), each thread can determine dynamically the highest address of its stack
 without even knowing its TCB by using the task.stack_highest_childs value and
 simple arithmetic (see get_tcb() function).
 
 ### 2.2 Library issued TID VS Kernel issue TID
 
-We make use of library issued TIDS in our thread library. Having library issued
+We make use of library issued TIDs in our thread library. Having library issued
 TIDs allow us to avoid making a gettid() system call sometimes, and consequently
 it speeds up our library. The TIDs accepted and returned by our library
 functions are these library issued TIDs, which in some cases need to be
@@ -195,3 +195,55 @@ Our implementation makes it unnecessary to call thr_init() to initialize the
 malloc library, which initializes itself the first time one of its function is
 called. To achieve this we use a mutex and an atomic operation using the XCHG
 instruction.
+
+
+### 2.5 Semaphores
+
+We use a condition variable, a mutex and three integers, init, wokenup_waiting
+and available_resources to implement semaphores. The init member contains the
+state information about the semaphore, specifically if it has been initialized
+yet or not. It contains SEM_INITIALIZED if sem_init has been called and it is
+set to SEM_UNITITIALIZED when sem_destroy has been called. The
+available_resources member is initalized to the count value sent in sem_init
+and is updated as each thread calls sem_wait and sem_signal. It is decremented
+every time a thread calls sem_wait and incremented every time it calls 
+sem_signal. If the value is less than 0 for this variable, it means all the 
+resources are being currently used and hence we have to wait for the condition
+variable to get signaled on a sem_signal(i.e. when a thread using a resource
+calls sem_signal). The mutex is needed to ensure atomicity and mutual_exclusion
+while calling the semaphore functions.
+
+The member wokenup_waiting stores the number of threads that have been woken up
+(made runnable) by a sem_signal but have not yet started executing. This is 
+required to ensure that there is no starvation and at least one waiting thread
+is woken up during a sem_signal.
+
+### 2.6 Read Write Locks
+
+We use 2 condition variables, namely read_cvar and write_cvar, a mutex and 6
+integers, namely waiting_readers, active_readers, waiting_writers, 
+active_writers, curr_op and init. The init member stores the state for the 
+read write lock similar to the init member in Semaphores. It can hold the
+value RWLOCK_INITIALIZED, when rwlock_init has been called or 
+RWLOCK_UNINITIALIZED when rwlock_destory has been called. The curr_op
+variable stores the operation that the threads that are currently running 
+are doing. If the thread(s) are currently holding a read lock, the curr_op
+is set to RWLOCK_READ, if they are holding a write lock, the curr_op is set to
+RWLOCK_WRITE. It is initialized with the value RWLOCK_INVALID when no lock has
+been taken yet. 
+
+The two variables, waiting_readers and active_readers store the
+number of threads waiting to acquire a read lock and the number of threads 
+holding a read(shared) lock. When the number of active readers reaches 
+zero, we check for any writers waiting for the lock and signal the write_cvar
+to make a writer runnable.
+The two variables, waiting_writers and active_writers
+store the number of threads waiting to acquire a write lock and the number of 
+threads holding a write lock. The number of threads holding a write lock should
+always be less than or equal to one. The value waiting_writers is checked
+whenever the active_readers count reaches 0 and if waiting_writers is greater 
+than 0, its condition variable is signaled to run the writer thread. When a
+writer completes its work and calls sem_signal, we check if there are any
+waiting writers and signal the write_cvar to make the waiting writer runnable
+If there are no waiting writers we call a broadcast on read_cvar thereby making
+all the reader threads runnable. 
