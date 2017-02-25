@@ -218,8 +218,9 @@ The member wokenup_waiting stores the number of threads that have been woken up
 required to ensure that there is no starvation and at least one waiting thread
 is woken up during a sem_signal.
 
-### 2.6 Read Write Locks
+### 2.6 Reader Writer Locks
 
+We have implemented the reader writer locks with the writers having priority.
 We use 2 condition variables, namely read_cvar and write_cvar, a mutex and 6
 integers, namely waiting_readers, active_readers, waiting_writers, 
 active_writers, curr_op and init. The init member stores the state for the 
