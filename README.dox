@@ -271,7 +271,7 @@ than 0, its condition variable is signaled to run the writer thread. When a
 writer completes its work and calls sem_signal, we check if there are any
 waiting writers and signal the write_cvar to make the waiting writer runnable
 If there are no waiting writers we call a broadcast on read_cvar thereby making
-all the reader threads runnable. 
+all the reader threads runnable.
 
 ### 2.9 thr_join() and thr_exit()
 
@@ -299,13 +299,13 @@ by another thread.
 
 The stack for Pebbles grows as the user needs more stack space in a single
 threaded environment. This is done by registering a software exception handler
-and then allocating memory on the task's stack by calling new_pages. We 
+and then allocating memory on the task's stack by calling new_pages. We
 have fixed the maximum size to which the stack can grow for a task in a single
 threaded environment to 8MB(default value in Linux) and any page faults for
 addresses beyond that range from the task's stack's highest memory address is
 considered a page fault for a region other than the stack and task_vanish is
 called to kill the task. If new_pages fails for some reason, we again kill the
-task using task_vanish. Then, we re-register the page fault handler as it is 
+task using task_vanish. Then, we re-register the page fault handler as it is
 de-registered by the kernel on invocation. The re-registration is done only
 in the case we handle a page fault exception because we do not want to end up
 in an inifinite loop by re-registering our handler and being called again
@@ -313,3 +313,17 @@ when the instruction is re-run.
 
 In multi-threaded environment, we just kill the thread if any exception occurs
 by calling task_vanish with -1 as a parameter.
+
+### 3.0 Known bugs
+
+There exists an interleaving of threads in thr_exit() and thr_join() that we
+believe may cause a bug (although this issue never showed up while testing).
+When an exiting thread releases the mutex tcb->mutex_state just before
+vanishing, it may be preempted by the kernel before calling vanish(). In that
+case, another thread joining on this one will be able to lock the mutex, see
+that the thread has exited, and proceed with the clean up steps as described
+in 2.9. Hence thr_join() might return before the exiting thread actually calls
+vanish(). Since the stack space associated with the exiting thread is put in
+task.stack_queue, it may be reused by another thread created via thr_create()
+still before the exiting thread calls vanish(). This may corrupt the stack of
+one of the thread, or both, and lead to unpredictable behavior.
