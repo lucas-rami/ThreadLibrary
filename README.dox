@@ -242,8 +242,9 @@ The member wokenup_waiting stores the number of threads that have been woken up
 required to ensure that there is no starvation and at least one waiting thread
 is woken up during a sem_signal.
 
-### 2.8 Read Write Locks
+### 2.8 Reader Writer Locks
 
+We have implemented the reader writer locks with the writers having priority.
 We use 2 condition variables, namely read_cvar and write_cvar, a mutex and 6
 integers, namely waiting_readers, active_readers, waiting_writers,
 active_writers, curr_op and init. The init member stores the state for the
@@ -272,7 +273,7 @@ waiting writers and signal the write_cvar to make the waiting writer runnable
 If there are no waiting writers we call a broadcast on read_cvar thereby making
 all the reader threads runnable.
 
-### 2.7 thr_join() and thr_exit()
+### 2.9 thr_join() and thr_exit()
 
 We use a condition variable stored in the TCB of each thread to make thr_join() and
 thr_exit() work together. When a thread A calls thr_exit() while no other threads has
