@@ -8,6 +8,7 @@
 #include <syscall.h>
 #include <thr_internals.h>
 #include <cond.h>
+#include <assert.h>
 
 /** @brief Exit the thread with an exit status
  *
@@ -22,9 +23,7 @@ void thr_exit(void *status) {
   tcb_t *tcb = get_tcb();
 
   // Should not happen
-  if (tcb == NULL) {
-    // panic("thr_exit(): Thread's TCB does not exist !\n");
-  }
+  assert(tcb != NULL);
 
   // Set return status
   tcb->return_status = status;
@@ -41,6 +40,7 @@ void thr_exit(void *status) {
 
   mutex_unlock(&tcb->mutex_state);
 
+  set_status((int)status);
   // Vanish the current thread
   vanish();
 }
