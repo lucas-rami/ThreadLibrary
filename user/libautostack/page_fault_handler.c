@@ -14,7 +14,7 @@
 #include <assert.h>
 
 // Maximum stack size is assumed to be 8MB like Linux
-#define MAX_STACK_SIZE 0x0100000000000000
+#define MAX_STACK_SIZE 0x800000
 
 /** @brief The exception handler for single threaded tasks
  *
@@ -52,14 +52,15 @@ void singlethread_handler(void* arg, ureg_t *ureg) {
       task_vanish(-1);
     }
     task.stack_lowest = (void *)((char*)task.stack_lowest - growth_size);
+
+    // Register the handler again
+    assert(swexn(exception_handler_stack + PAGE_SIZE,
+         singlethread_handler, NULL, ureg) >= 0);
   }
 
-  // Register the handler again
-  if (swexn(exception_handler_stack + PAGE_SIZE,
-       singlethread_handler, NULL, ureg) < 0) {
-    // Can't register the handler
-    assert(0);
-  }
+  /* Do not register the handler again in case it is not a page fault.
+   * This might result in our handler being called infintely.
+   */
 }
 
 /** @brief Exception handler for multithreaded application
