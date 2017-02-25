@@ -84,7 +84,7 @@ typedef struct task {
   /** @brief Size for each thread's stack
    */
   unsigned int stack_size;
-  /** @brief Lowest address of task's threads stacks (initialized by autostack())
+  /** @brief Lowest address of task's threads stacks(initialized by autostack())
    */
   unsigned int *stack_highest;
   /** @brief Highest address for (grand)child threads of first thread
@@ -95,7 +95,7 @@ typedef struct task {
    * their value does not change after thr_init() has returned */
   /*------------------------------*/
 
-  /** @brief Lowest address of task's threads stacks (initialized by autostack())
+  /** @brief Lowest address of task's threads stacks(initialized by autostack())
    */
   unsigned int *stack_lowest;
   /** @brief Thread library tids

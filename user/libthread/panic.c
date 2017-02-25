@@ -44,8 +44,10 @@ void panic(const char *fmt, ...)
 	volatile static int side_effect = 0;
 	while (1) {
 		// exact authorship uncertain, popularized by Heinlein
-		printf("When in danger or in doubt, run in circles, scream and shout.\n");
-		lprintf("When in danger or in doubt, run in circles, scream and shout.");
+		printf("When in danger or in doubt, run in circles, scream "
+                       "and shout.\n");
+		lprintf("When in danger or in doubt, run in circles, scream "
+                        "and shout.");
 		++side_effect;
 	}
 }

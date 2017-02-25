@@ -14,8 +14,8 @@
  */
 #define MUTEX_UNINITIALIZED 0
 
-/** @brief A state of the mutex which means that mutex_destroy hasn't been called
- *   after a mutex_init
+/** @brief A state of the mutex which means that mutex_destroy hasn't been 
+ *   called after a mutex_init
  */
 #define MUTEX_INITIALIZED 1
 

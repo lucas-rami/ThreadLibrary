@@ -8,6 +8,11 @@
 
 /** @brief Exchanges the value at the address pointed to by the first parameter
  *   with the second parameter
+ *  @param mutex_lock The pointer to the value to be exchanged with the second 
+ *   parameter
+ *  @param val The value to be exchanged with the first parameter
+ *
+ *  @return The previous value at the address specified in the first parameter
  */
 int atomic_exchange(int *mutex_lock, int val);
 
